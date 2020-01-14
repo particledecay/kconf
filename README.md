@@ -20,7 +20,7 @@ kconf list
 ```
 
 ## Why?
-I was previously managing my kubeconfigs using the `$KUBECONFIG` environment variable. However, in order to automate this process, you have to do add something like this to your rc files:
+I was previously managing my kubeconfigs using the `$KUBECONFIG` environment variable. However, in order to automate this process, you have to do something like this in your rc files:
 ```bash
 KUBECONFIG=$(find $HOME/.kube -type f -name '*.conf' 2> /dev/null | sed ':a;N;$!ba;s/\n/:/g')
 ```
