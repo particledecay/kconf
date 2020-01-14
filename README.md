@@ -14,6 +14,11 @@ To remove an existing kubeconfig:
 kconf rm myContext
 ```
 
+To view all saved contexts in the kubeconfig:
+```bash
+kconf list
+```
+
 ## Why?
 I was previously managing my kubeconfigs using the `$KUBECONFIG` environment variable. However, in order to automate this process, you have to do add something like this to your rc files:
 ```bash
