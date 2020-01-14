@@ -70,6 +70,18 @@ var removeCmd = &cobra.Command{
 	},
 }
 
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all saved contexts",
+	Long:  `Print a list of all contexts previously saved in kubeconfig`,
+	Run: func(cmd *cobra.Command, args []string) {
+		err := kubeconfig.List()
+		if err != nil {
+			log.Fatal().Msgf("Error while listing contexts: %v", err)
+		}
+	},
+}
+
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
@@ -79,6 +91,7 @@ func init() {
 func Execute() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(removeCmd)
+	rootCmd.AddCommand(listCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Msgf("Error during execution: %v", err)
 	}

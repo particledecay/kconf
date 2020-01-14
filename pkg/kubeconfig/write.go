@@ -1,6 +1,8 @@
 package kubeconfig
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -28,7 +30,7 @@ func Merge(config *clientcmdapi.Config) error {
 	for user := range config.AuthInfos {
 		if _, ok := mainConfig.AuthInfos[user]; !ok {
 			mainConfig.AuthInfos[user] = config.AuthInfos[user]
-			log.Info().Msgf("Adding new user %s", user)
+			fmt.Printf("Adding new user %s", user)
 		}
 	}
 
@@ -36,7 +38,7 @@ func Merge(config *clientcmdapi.Config) error {
 	for cluster := range config.Clusters {
 		if _, ok := mainConfig.Clusters[cluster]; !ok {
 			mainConfig.Clusters[cluster] = config.Clusters[cluster]
-			log.Info().Msgf("Adding new cluster %s", cluster)
+			fmt.Printf("Adding new cluster %s", cluster)
 		}
 	}
 
@@ -44,7 +46,7 @@ func Merge(config *clientcmdapi.Config) error {
 	for context := range config.Contexts {
 		if _, ok := mainConfig.Contexts[context]; !ok {
 			mainConfig.Contexts[context] = config.Contexts[context]
-			log.Info().Msgf("Adding new context %s", context)
+			fmt.Printf("Adding new context %s", context)
 		}
 	}
 

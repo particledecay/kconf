@@ -1,6 +1,8 @@
 package kubeconfig
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,11 +20,11 @@ func Remove(name string) {
 		return
 	}
 
-	log.Info().Msgf("Removing %s user", context.AuthInfo)
+	fmt.Printf("Removing %s user", context.AuthInfo)
 	delete(mainConfig.AuthInfos, context.AuthInfo)
-	log.Info().Msgf("Removing %s cluster", context.Cluster)
+	fmt.Printf("Removing %s cluster", context.Cluster)
 	delete(mainConfig.Clusters, context.Cluster)
-	log.Info().Msgf("Removing %s context", name)
+	fmt.Printf("Removing %s context", name)
 	delete(mainConfig.Contexts, name)
 
 	err = Write(mainConfig)
