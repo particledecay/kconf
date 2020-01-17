@@ -47,3 +47,4 @@ _testmain.go
 /.vscode
 debug.test
 /vendor/
+*.coverprofile
