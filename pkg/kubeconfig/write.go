@@ -5,12 +5,11 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // Write takes a config and saves it to a file
-func Write(config *clientcmdapi.Config) error {
-	err := clientcmd.WriteToFile(*config, MainConfigPath)
+func Write(config *KConf) error {
+	err := clientcmd.WriteToFile(config.Config, MainConfigPath)
 	if err != nil {
 		log.Error().Msgf("Could not write to file at %s", MainConfigPath)
 	}
@@ -18,7 +17,7 @@ func Write(config *clientcmdapi.Config) error {
 }
 
 // Merge takes a config and combines it into a config file
-func Merge(config *clientcmdapi.Config) error {
+func Merge(config *KConf) error {
 	mainConfig, err := Read(MainConfigPath)
 	if err != nil {
 		log.Fatal().Msgf("Could not read main config file: %v", err)
@@ -43,11 +42,12 @@ func Merge(config *clientcmdapi.Config) error {
 	}
 
 	// merge contexts
-	for context := range config.Contexts {
-		if _, ok := mainConfig.Contexts[context]; !ok {
-			mainConfig.Contexts[context] = config.Contexts[context]
-			fmt.Printf("Adding new context %s", context)
+	for ctxName, ctx := range config.Contexts {
+		if added := mainConfig.AddContext(ctx); added != "" {
+			fmt.Printf("Adding new context '%s'", added)
 		}
+		fmt.Printf("Adding new context '%s'", ctxName)
+		mainConfig.Contexts[ctxName] = ctx
 	}
 
 	err = Write(mainConfig)

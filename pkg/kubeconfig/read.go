@@ -3,7 +3,6 @@ package kubeconfig
 import (
 	"fmt"
 	"os"
-	"path"
 	"sort"
 
 	"github.com/rs/zerolog/log"
@@ -11,17 +10,16 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// MainConfigPath is the file path to the main config
-var MainConfigPath string
-
 // Read returns a Config object representing an entire Kubernetes config
-func Read(filepath string) (*clientcmdapi.Config, error) {
+func Read(filepath string) (*KConf, error) {
+	k := &KConf{}
 	_, err := os.Stat(filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Debug().Msgf("File not found: %s", filepath)
 			// return empty config object if file does not exist
-			return clientcmdapi.NewConfig(), nil
+			k.Config = *clientcmdapi.NewConfig()
+			return k, nil
 		}
 		return nil, err
 	}
@@ -30,7 +28,8 @@ func Read(filepath string) (*clientcmdapi.Config, error) {
 		log.Error().Msgf("Error while reading %s: %v", filepath, err)
 		return nil, err
 	}
-	return kubeconfig, nil
+	k.Config = *kubeconfig
+	return k, nil
 }
 
 // List reads the kubeconfig and returns all of the available contexts
@@ -51,8 +50,4 @@ func List() error {
 		fmt.Printf("%s\n", context)
 	}
 	return nil
-}
-
-func init() {
-	MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
 }
