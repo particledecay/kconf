@@ -1,7 +1,6 @@
 package kubeconfig
 
 import (
-	"fmt"
 	"os"
 	"sort"
 
@@ -10,44 +9,45 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// Read returns a Config object representing an entire Kubernetes config
-func Read(filepath string) (*KConf, error) {
+// Read loads a kubeconfig file and returns an api.Config (client-go) type
+func Read(filepath string) (*clientcmdapi.Config, error) {
+	config, err := clientcmd.LoadFromFile(filepath)
+	if err != nil {
+		log.Debug().Msgf("Error while reading %s: %v", filepath, err)
+		return nil, err
+	}
+	return config, nil
+}
+
+// GetConfig reads the main kubeconfig and returns a KConf type
+func GetConfig() (*KConf, error) {
 	k := &KConf{}
-	_, err := os.Stat(filepath)
+	_, err := os.Stat(MainConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Debug().Msgf("File not found: %s", filepath)
+			log.Debug().Msgf("Main config does not yet exist")
 			// return empty config object if file does not exist
 			k.Config = *clientcmdapi.NewConfig()
 			return k, nil
 		}
 		return nil, err
 	}
-	kubeconfig, err := clientcmd.LoadFromFile(filepath)
+	kubeconfig, err := Read(MainConfigPath)
 	if err != nil {
-		log.Error().Msgf("Error while reading %s: %v", filepath, err)
+		log.Debug().Msgf("Error while reading main config: %v", err)
 		return nil, err
 	}
 	k.Config = *kubeconfig
 	return k, nil
 }
 
-// List reads the kubeconfig and returns all of the available contexts
-func List() error {
+// List returns an array of contexts
+func (k *KConf) List() []string {
 	contexts := []string{}
-	mainConfig, err := Read(MainConfigPath)
-	if err != nil {
-		log.Debug().Msg("Could not read main config")
-		return err
-	}
-
-	for context := range mainConfig.Contexts {
+	for context := range k.Contexts {
 		contexts = append(contexts, context)
 	}
 
 	sort.Strings(contexts)
-	for _, context := range contexts {
-		fmt.Printf("%s\n", context)
-	}
-	return nil
+	return contexts
 }

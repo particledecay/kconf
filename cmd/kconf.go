@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/rs/zerolog"
 
@@ -44,14 +45,28 @@ var addCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := kubeconfig.Read(args[0])
+		filepath := args[0]
+		config, err := kubeconfig.GetConfig()
+		if err != nil {
+			log.Fatal().Msgf("Error while reading main config: %v", err)
+		}
+
+		newConfig, err := kubeconfig.Read(filepath)
+		if err != nil {
+			log.Fatal().Msgf("Error while reading %s: %v", filepath, err)
+		}
+		if config == nil {
+			log.Fatal().Msgf("Could not find kubeconfig at %s", filepath)
+		}
+
+		err = config.Merge(newConfig)
 		if err != nil {
 			log.Fatal().Msgf("%v", err)
 		}
-		if config == nil {
-			log.Fatal().Msgf("Could not find file at %s", args[0])
+		err = config.Save()
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
 		}
-		kubeconfig.Merge(config)
 	},
 }
 
@@ -66,7 +81,19 @@ var removeCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		kubeconfig.Remove(args[0])
+		contextName := args[0]
+		config, err := kubeconfig.GetConfig()
+		if err != nil {
+			log.Fatal().Msgf("Error while reading main config: %v", err)
+		}
+		err = config.Remove(contextName)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+		err = config.Save()
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
 	},
 }
 
@@ -75,9 +102,13 @@ var listCmd = &cobra.Command{
 	Short: "List all saved contexts",
 	Long:  `Print a list of all contexts previously saved in kubeconfig`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := kubeconfig.List()
+		config, err := kubeconfig.GetConfig()
 		if err != nil {
-			log.Fatal().Msgf("Error while listing contexts: %v", err)
+			log.Fatal().Msgf("Could not read main config")
+		}
+		contexts := config.List()
+		for _, ctx := range contexts {
+			fmt.Println(ctx)
 		}
 	},
 }

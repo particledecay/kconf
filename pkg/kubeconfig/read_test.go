@@ -1,17 +1,15 @@
-package kubeconfig_test
+package kubeconfig
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	. "github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
 var _ = Describe("Pkg/Kubeconfig/Read", func() {
-	Context("When the kubeconfig file doesn't exist", func() {
-		It("Should create an empty kubeconfig", func() {
-			config, _ := Read("/some/nonexistent/path")
-			Expect(config.Contexts).Should(BeEmpty())
-		})
+	It("Should fail if kubeconfig doesn't exist", func() {
+		config, err := Read("/some/nonexistent/path")
+
+		Expect(config).To(BeNil())
+		Expect(err).Should(HaveOccurred())
 	})
 })
