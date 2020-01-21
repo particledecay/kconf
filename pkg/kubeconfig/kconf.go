@@ -13,11 +13,11 @@ import (
 type Configurable interface {
 	AddContext() bool
 	AddCluster() bool
-	// AddUser() bool
+	AddUser() bool
 
 	hasContext() bool
 	hasCluster() bool
-	// hasUser() bool
+	hasUser() bool
 	rename() string
 }
 
