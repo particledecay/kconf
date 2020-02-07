@@ -1,6 +1,7 @@
 package kubeconfig
 
 import (
+	"fmt"
 	"os"
 	"sort"
 
@@ -50,4 +51,38 @@ func (k *KConf) List() []string {
 
 	sort.Strings(contexts)
 	return contexts
+}
+
+// Export returns a single context's config from a kubeconfig file
+func (k *KConf) Export(name string) (*clientcmdapi.Config, error) {
+	context, ok := k.Contexts[name]
+	if !ok { // the context never existed
+		return nil, fmt.Errorf("Could not find context '%s'", name)
+	}
+
+	// create new config for only this context
+	config := *clientcmdapi.NewConfig()
+	config.Contexts[name] = context
+	config.AuthInfos[context.AuthInfo] = k.AuthInfos[context.AuthInfo]
+	config.Clusters[context.Cluster] = k.Clusters[context.Cluster]
+	config.CurrentContext = name
+
+	return &config, nil
+}
+
+// GetContent converts a single config into writeable content
+func (k *KConf) GetContent(name string) ([]byte, error) {
+	config, err := k.Export(name)
+	if err != nil {
+		log.Debug().Msgf("Could not export context '%s'", name)
+		return []byte{}, err
+	}
+
+	content, err := clientcmd.Write(*config)
+	if err != nil {
+		log.Debug().Msgf("Error in clientcmd.Write command for context '%s'", name)
+		return []byte{}, err
+	}
+
+	return content, nil
 }
