@@ -71,3 +71,13 @@ func (k *KConf) Merge(config *clientcmdapi.Config) error {
 	}
 	return nil
 }
+
+// Export extracts a single context from a kubeconfig file
+func (k *KConf) Export(name string) (*clientcmdapi.Context, error) {
+	for ctxName, ctx := range k.Contexts {
+		if ctxName == name {
+			return ctx, nil
+		}
+	}
+	return nil, fmt.Errorf("Could not find context '%s'", name)
+}
