@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/rs/zerolog"
 
@@ -113,6 +114,28 @@ var listCmd = &cobra.Command{
 	},
 }
 
+var viewCmd = &cobra.Command{
+	Use:   "view",
+	Short: "View a specific context's config",
+	Long:  `Display all of the config resources associated with a specific context`,
+	Run: func(cmd *cobra.Command, args []string) {
+		contextName := args[0]
+		config, err := kubeconfig.GetConfig()
+		if err != nil {
+			log.Fatal().Msg("Could not read main config")
+		}
+
+		// convert config into bytes
+		content, err := config.GetContent(contextName)
+		if err != nil {
+			log.Fatal().Msgf("Error while converting context '%s': %v", contextName, err)
+		}
+
+		// print config content
+		os.Stdout.Write(content)
+	},
+}
+
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
@@ -123,6 +146,7 @@ func Execute() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(viewCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Msgf("Error during execution: %v", err)
 	}
