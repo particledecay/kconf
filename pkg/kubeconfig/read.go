@@ -44,11 +44,14 @@ func GetConfig() (*KConf, error) {
 
 // List returns an array of contexts
 func (k *KConf) List() []string {
+	currentContext := k.Config.CurrentContext
 	contexts := []string{}
 	for context := range k.Contexts {
+		if currentContext == context {
+			context = "- " + context
+		}
 		contexts = append(contexts, context)
 	}
-
 	sort.Strings(contexts)
 	return contexts
 }
