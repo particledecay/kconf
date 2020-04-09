@@ -37,8 +37,8 @@ var rootCmd = &cobra.Command{
 
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Add in a new kubeconfig file could set context name",
-	Long:  `Add a new kubeconfig file to the existing merged config file and set context name`,
+	Short: "Add in a new kubeconfig file and option context name",
+	Long:  `Add a new kubeconfig file to the existing merged config file and option context name`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must supply the path to a kubeconfig file")
@@ -111,9 +111,13 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal().Msgf("Could not read main config")
 		}
-		contexts := config.List()
+		contexts, currentContext := config.List()
 		for _, ctx := range contexts {
-			fmt.Println(ctx)
+			if currentContext == ctx {
+				fmt.Println("*", ctx)
+			} else {
+				fmt.Println(" ", ctx)
+			}
 		}
 	},
 }

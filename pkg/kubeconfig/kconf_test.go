@@ -186,6 +186,20 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 
 		Expect(k.Contexts["test-1"].Cluster).To(Equal("test-1"))
 	})
+
+	It("Should add a context with context name", func() {
+		context := &clientcmdapi.Context{
+			LocationOfOrigin: "/home/user/.kube/config",
+			Cluster:          "test-1",
+			AuthInfo:         "test",
+			Namespace:        "default",
+		}
+		k := mockConfig(0)
+		testName := "test"
+		result, err := k.AddContext(testName, context)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(result).To(Equal(testName))
+	})
 })
 
 var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
