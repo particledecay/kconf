@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	verbose bool
+	verbose     bool
+	contextName string
 )
 
 var rootCmd = &cobra.Command{
@@ -47,10 +48,6 @@ var addCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		filepath := args[0]
-		name := ""
-		if len(args) == 2 {
-			name = args[1]
-		}
 		config, err := kubeconfig.GetConfig()
 		if err != nil {
 			log.Fatal().Msgf("Error while reading main config: %v", err)
@@ -64,7 +61,7 @@ var addCmd = &cobra.Command{
 			log.Fatal().Msgf("Could not find kubeconfig at %s", filepath)
 		}
 
-		err = config.Merge(newConfig, name)
+		err = config.Merge(newConfig, contextName)
 		if err != nil {
 			log.Fatal().Msgf("%v", err)
 		}
@@ -147,6 +144,7 @@ var viewCmd = &cobra.Command{
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
+	addCmd.Flags().StringVarP(&contextName, "contextName", "n", "", "set context name")
 }
 
 // Execute combines all of the available command functions
