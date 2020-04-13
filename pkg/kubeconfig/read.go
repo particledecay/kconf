@@ -43,14 +43,14 @@ func GetConfig() (*KConf, error) {
 }
 
 // List returns an array of contexts
-func (k *KConf) List() []string {
+func (k *KConf) List() ([]string, string) {
+	currentContext := k.Config.CurrentContext
 	contexts := []string{}
 	for context := range k.Contexts {
 		contexts = append(contexts, context)
 	}
-
 	sort.Strings(contexts)
-	return contexts
+	return contexts, currentContext
 }
 
 // Export returns a single context's config from a kubeconfig file
