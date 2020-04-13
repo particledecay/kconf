@@ -19,7 +19,7 @@ func (k *KConf) Save() error {
 }
 
 // Merge takes a config and combines it into a config file
-func (k *KConf) Merge(config *clientcmdapi.Config) error {
+func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
 	renamedClusters := make(map[string]string)
 	renamedUsers := make(map[string]string)
 
@@ -57,8 +57,10 @@ func (k *KConf) Merge(config *clientcmdapi.Config) error {
 		if renamed, ok := renamedUsers[ctx.AuthInfo]; ok {
 			ctx.AuthInfo = renamed
 		}
-
-		added, err := k.AddContext(ctxName, ctx)
+		if name == "" {
+			name = ctxName
+		}
+		added, err := k.AddContext(name, ctx)
 		if err != nil {
 			return err
 		}

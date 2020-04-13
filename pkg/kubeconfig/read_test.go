@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,6 +16,18 @@ var _ = Describe("Pkg/Kubeconfig/Read", func() {
 
 		Expect(config).To(BeNil())
 		Expect(err).Should(HaveOccurred())
+	})
+})
+
+var _ = Describe("Pkg/Kubeconfig/List", func() {
+	It("Should return all context names", func() {
+		contexts := []string{}
+		k := mockConfig(3)
+		for context := range k.Contexts {
+			contexts = append(contexts, context)
+		}
+		sort.Strings(contexts)
+		Expect(contexts).To(Equal([]string{"test", "test-1", "test-2"}))
 	})
 })
 
