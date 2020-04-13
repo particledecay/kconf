@@ -17,8 +17,8 @@ kconf add /path/to/kubeconfig.conf
 or
 
 ```sh
-kconf add /path/to/kubeconfig.conf --contextName=name
-kconf add /path/to/kubeconfig.conf -n=name
+kconf add /path/to/kubeconfig.conf --context-name=name
+kconf add /path/to/kubeconfig.conf -n name
 ```
 
 To remove an existing kubeconfig:

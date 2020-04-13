@@ -38,8 +38,8 @@ var rootCmd = &cobra.Command{
 
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Add in a new kubeconfig file and option context name",
-	Long:  `Add a new kubeconfig file to the existing merged config file and option context name`,
+	Short: "Add in a new kubeconfig file and optional context name",
+	Long:  `Add a new kubeconfig file to the existing merged config file and optional context name`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must supply the path to a kubeconfig file")
@@ -144,7 +144,7 @@ var viewCmd = &cobra.Command{
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
-	addCmd.Flags().StringVarP(&contextName, "contextName", "n", "", "set context name")
+	addCmd.Flags().StringVarP(&contextName, "context-name", "n", "", "override context name")
 }
 
 // Execute combines all of the available command functions
