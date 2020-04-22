@@ -141,6 +141,49 @@ var viewCmd = &cobra.Command{
 	},
 }
 
+var useCmd = &cobra.Command{
+	Use:   "use",
+	Short: "set current context",
+	Long:  `set current context by user provide the name`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("You must provide the name of a kubeconfig context")
+		}
+		return nil
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		contextName := args[0]
+
+		config, err := kubeconfig.GetConfig()
+		if err != nil {
+			log.Fatal().Msgf("Could not read main config")
+		}
+
+		contexts, currentContext := config.List()
+		if currentContext == contextName {
+			fmt.Printf("current context is %s, don't need switch", currentContext)
+			return
+		}
+
+		hasContext := false
+		for _, ctx := range contexts {
+			if contextName == ctx {
+				hasContext = true
+			}
+		}
+		if hasContext {
+			err := config.WriteCurrentContext(contextName)
+			if err == nil {
+				fmt.Printf("switch %s success", contextName)
+			} else {
+				log.Fatal().Msgf("Could not save current context to main config")
+			}
+		} else {
+			fmt.Println("There isn't such as this context name:", contextName)
+		}
+	},
+}
+
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
@@ -153,6 +196,7 @@ func Execute() {
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(viewCmd)
+	rootCmd.AddCommand(useCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Msgf("Error during execution: %v", err)
 	}

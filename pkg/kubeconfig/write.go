@@ -73,3 +73,10 @@ func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
 	}
 	return nil
 }
+
+// Write current context to file
+func (k *KConf) WriteCurrentContext(currentContext string) error {
+	k.Config.CurrentContext = currentContext
+	err := k.Save()
+	return err
+}
