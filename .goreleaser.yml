@@ -13,7 +13,7 @@ archives:
     darwin: Darwin
     linux: Linux
     amd64: x86_64
-  name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}-{{ .Version }}"
+  name_template: "{{ .ProjectName }}-{{ tolower .Os }}-{{ .Arch }}-{{ .Version }}"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
