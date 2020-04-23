@@ -1,0 +1,28 @@
+# This is an example goreleaser.yaml file with some sane defaults.
+# Make sure to check the documentation at http://goreleaser.com
+project_name: kconf
+before:
+  hooks:
+    - go mod download
+builds:
+  - binary: program
+    env:
+      - CGO_ENABLED=0
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    amd64: x86_64
+  name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}-{{ .Version }}"
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: desc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  draft: true
