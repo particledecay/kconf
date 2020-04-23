@@ -103,6 +103,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all saved contexts",
 	Long:  `Print a list of all contexts previously saved in kubeconfig`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := kubeconfig.GetConfig()
 		if err != nil {
@@ -123,6 +124,12 @@ var viewCmd = &cobra.Command{
 	Use:   "view",
 	Short: "View a specific context's config",
 	Long:  `Display all of the config resources associated with a specific context`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return errors.New("You must provide the name of a kubeconfig context")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		contextName := args[0]
 		config, err := kubeconfig.GetConfig()
