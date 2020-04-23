@@ -1,0 +1,24 @@
+policies:
+  - type: commit
+    spec:
+      headerLength: 72
+      dco: false
+      gpg: false
+      imperative: true
+      maximumOfOneCommit: true
+      requireCommitBody: false
+      conventional:
+        types:
+          - chore
+          - docs
+          - feat
+          - fix
+          - perf
+          - refactor
+          - style
+          - test
+        scopes:
+          - "*"
+          - cmd
+          - pkg
+          - build
