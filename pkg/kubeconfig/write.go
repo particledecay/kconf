@@ -75,8 +75,6 @@ func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
 }
 
 // Write current context to file
-func (k *KConf) WriteCurrentContext(currentContext string) error {
+func (k *KConf) WriteCurrentContext(currentContext string) {
 	k.Config.CurrentContext = currentContext
-	err := k.Save()
-	return err
 }

@@ -144,7 +144,7 @@ var viewCmd = &cobra.Command{
 var useCmd = &cobra.Command{
 	Use:   "use",
 	Short: "set current context",
-	Long:  `set current context by user provide the name`,
+	Long:  `set the current context in the main kubeconfig`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must provide the name of a kubeconfig context")
@@ -161,7 +161,7 @@ var useCmd = &cobra.Command{
 
 		contexts, currentContext := config.List()
 		if currentContext == contextName {
-			fmt.Printf("current context is %s, don't need switch", currentContext)
+			fmt.Printf("Current context is already '%s'", currentContext)
 			return
 		}
 
@@ -169,17 +169,19 @@ var useCmd = &cobra.Command{
 		for _, ctx := range contexts {
 			if contextName == ctx {
 				hasContext = true
+				break
 			}
 		}
 		if hasContext {
-			err := config.WriteCurrentContext(contextName)
+			config.WriteCurrentContext(contextName)
+			config.Save()
 			if err == nil {
-				fmt.Printf("switch %s success", contextName)
+				fmt.Printf("Using context '%s'", contextName)
 			} else {
 				log.Fatal().Msgf("Could not save current context to main config")
 			}
 		} else {
-			fmt.Println("There isn't such as this context name:", contextName)
+			fmt.Printf("Context '%s' not found", contextName)
 		}
 	},
 }

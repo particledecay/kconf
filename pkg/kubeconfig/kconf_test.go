@@ -414,3 +414,22 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 		Expect(k.AuthInfos["test-1"].Token).To(Equal("bbbbbbbbbbbb-test-1"))
 	})
 })
+
+var _ = Describe("Pkg/Kubeconfig/WriteCurrentContext", func() {
+	It("Should return true when set exist context name", func() {
+		contextName := "test-1"
+		config := clientcmdapi.NewConfig()
+		config.Clusters[contextName] = &clientcmdapi.Cluster{
+			LocationOfOrigin:         "/home/user/.kube/config",
+			Server:                   "https://example-test.com:6443",
+			InsecureSkipTLSVerify:    true,
+			CertificateAuthority:     "bbbbbbbbbbbb",
+			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+		}
+		config.CurrentContext = contextName
+
+		k := mockConfig(0)
+		k.WriteCurrentContext(contextName)
+		Expect(k.CurrentContext).To(Equal(contextName))
+	})
+})
