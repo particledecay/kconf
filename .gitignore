@@ -5,7 +5,7 @@
 *.pyc
 ._*
 .nfs.*
-[56789a].out
+*.out
 *~
 *.orig
 *.rej
