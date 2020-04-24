@@ -39,6 +39,12 @@ To view and print a single context's kubeconfig (you can pipe or export to a fil
 kconf view myContext
 ```
 
+To set the current context in the main kubeconfig
+
+```sh
+kconf use myContext
+```
+
 ## Why?
 
 I was previously managing my kubeconfigs using the `$KUBECONFIG` environment variable. However, in order to automate this process, you have to do something like this in your rc files:
