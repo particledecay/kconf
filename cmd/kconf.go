@@ -37,9 +37,10 @@ var rootCmd = &cobra.Command{
 }
 
 var addCmd = &cobra.Command{
-	Use:   "add",
-	Short: "Add in a new kubeconfig file and optional context name",
-	Long:  `Add a new kubeconfig file to the existing merged config file and optional context name`,
+	Use:     "add",
+	Short:   "Add in a new kubeconfig file and optional context name",
+	Long:    `Add a new kubeconfig file to the existing merged config file and optional context name`,
+	Aliases: []string{"a"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must supply the path to a kubeconfig file")
@@ -73,9 +74,10 @@ var addCmd = &cobra.Command{
 }
 
 var removeCmd = &cobra.Command{
-	Use:   "rm",
-	Short: "Remove a kubeconfig from main file",
-	Long:  `Remove a named context and associated resources from main kubeconfig file`,
+	Use:     "rm",
+	Short:   "Remove a kubeconfig from main file",
+	Long:    `Remove a named context and associated resources from main kubeconfig file`,
+	Aliases: []string{"r"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must provide the name of a kubeconfig context")
@@ -100,10 +102,11 @@ var removeCmd = &cobra.Command{
 }
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all saved contexts",
-	Long:  `Print a list of all contexts previously saved in kubeconfig`,
-	Args:  cobra.NoArgs,
+	Use:     "list",
+	Short:   "List all saved contexts",
+	Long:    `Print a list of all contexts previously saved in kubeconfig`,
+	Aliases: []string{"ls"},
+	Args:    cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := kubeconfig.GetConfig()
 		if err != nil {
@@ -121,9 +124,10 @@ var listCmd = &cobra.Command{
 }
 
 var viewCmd = &cobra.Command{
-	Use:   "view",
-	Short: "View a specific context's config",
-	Long:  `Display all of the config resources associated with a specific context`,
+	Use:     "view",
+	Short:   "View a specific context's config",
+	Long:    `Display all of the config resources associated with a specific context`,
+	Aliases: []string{"v"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must provide the name of a kubeconfig context")
@@ -149,9 +153,10 @@ var viewCmd = &cobra.Command{
 }
 
 var useCmd = &cobra.Command{
-	Use:   "use",
-	Short: "set current context",
-	Long:  `set the current context in the main kubeconfig`,
+	Use:     "use",
+	Short:   "Set the current context",
+	Long:    `Set the current context in the main kubeconfig`,
+	Aliases: []string{"u"},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {
 			return errors.New("You must provide the name of a kubeconfig context")
