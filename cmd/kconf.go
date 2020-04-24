@@ -168,7 +168,7 @@ var useCmd = &cobra.Command{
 
 		contexts, currentContext := config.List()
 		if currentContext == contextName {
-			fmt.Printf("Current context is already '%s'", currentContext)
+			fmt.Printf("Current context is already '%s'\n", currentContext)
 			return
 		}
 
@@ -183,12 +183,12 @@ var useCmd = &cobra.Command{
 			config.WriteCurrentContext(contextName)
 			config.Save()
 			if err == nil {
-				fmt.Printf("Using context '%s'", contextName)
+				fmt.Printf("Using context '%s'\n", contextName)
 			} else {
 				log.Fatal().Msgf("Could not save current context to main config")
 			}
 		} else {
-			fmt.Printf("Context '%s' not found", contextName)
+			fmt.Printf("Context '%s' not found\n", contextName)
 		}
 	},
 }
