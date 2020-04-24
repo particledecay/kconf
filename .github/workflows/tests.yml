@@ -16,9 +16,13 @@ jobs:
       - run: |
           git fetch origin +refs/heads/master:refs/heads/master
 
+      # conform
+      - name: Conform
+        uses: talos-systems/conform@v0.1.0-alpha.17
+
       # for pre-commit
       - uses: actions/setup-python@v1
-      - name: set PY
+      - name: Set PY
         run: echo "::set-env name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')"
       - uses: actions/cache@v1
         with:
