@@ -2,9 +2,9 @@
   <h1 align="center">kconf</h1>
   <p align="center">An opinionated command line tool for managing multiple kubeconfigs.</p>
   <p align="center">
-    <a href="https://github.com/particledecay/kconf/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/particledecay/kconf?style=for-the-badge"></a>
-    <a href="https://github.com/particledecay/kconf/actions?query=workflow%3Atests"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/particledecay/kconf/tests/master?label=tests&style=for-the-badge"></a>
-    <a href="https://coveralls.io/github/particledecay/kconf?branch=master"><img alt="Coverage Status" src="https://img.shields.io/coveralls/github/particledecay/kconf/master?style=for-the-badge"></a>
+    <a href="https://github.com/particledecay/kconf/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/particledecay/kconf"></a>
+    <a href="https://github.com/particledecay/kconf/actions?query=workflow%3Atests"><img alt="GitHub Workflow Status" src="https://github.com/particledecay/kconf/workflows/tests/badge.svg"></a>
+    <a href="https://coveralls.io/github/particledecay/kconf?branch=master"><img alt="Coverage Status" src="https://img.shields.io/coveralls/github/particledecay/kconf/master"></a>
   </p>
 </p>
 
