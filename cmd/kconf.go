@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/particledecay/kconf/build"
 	"github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
@@ -198,6 +199,23 @@ var useCmd = &cobra.Command{
 	},
 }
 
+var versionCmd = &cobra.Command{
+	Use:     "version",
+	Short:   "Print version",
+	Long:    `Print version information`,
+	Aliases: []string{"ver"},
+	Args:    cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		if verbose == true {
+			if err := build.PrintLongVersion(); err != nil {
+				log.Error().Msgf("%v", err)
+			}
+		} else {
+			build.PrintVersion()
+		}
+	},
+}
+
 func init() {
 	// flags
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
@@ -211,6 +229,7 @@ func Execute() {
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(viewCmd)
 	rootCmd.AddCommand(useCmd)
+	rootCmd.AddCommand(versionCmd)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Msgf("Error during execution: %v", err)
 	}
