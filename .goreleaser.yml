@@ -8,6 +8,8 @@ builds:
   - binary: kconf
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/particledecay/kconf/build.Version={{ .Version }} -X github.com/particledecay/kconf/build.Commit={{ .ShortCommit }} -X github.com/particledecay/kconf/build.Date={{ .Date }}
 archives:
 - replacements:
     darwin: Darwin
