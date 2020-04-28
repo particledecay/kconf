@@ -16,7 +16,7 @@ kconf works by storing all kubeconfig information in a single file (`$HOME/.kube
 
 ## Usage
 
-To merge in a new kubeconfig file:
+##### Add in a new kubeconfig file:
 
 ```sh
 kconf add /path/to/kubeconfig.conf
@@ -29,28 +29,34 @@ kconf add /path/to/kubeconfig.conf --context-name=name
 kconf add /path/to/kubeconfig.conf -n name
 ```
 
-To remove an existing kubeconfig:
+##### Remove an existing kubeconfig:
 
 ```sh
 kconf rm myContext
 ```
 
-To view all saved contexts in the kubeconfig:
+##### List all saved contexts in the kubeconfig:
 
 ```sh
 kconf list
 ```
 
-To view and print a single context's kubeconfig (you can pipe or export to a file):
+##### View and print a single context's kubeconfig (you can pipe or export to a file):
 
 ```sh
 kconf view myContext
 ```
 
-To set the current context in the main kubeconfig
+##### Switch to an existing context:
 
 ```sh
 kconf use myContext
+```
+
+##### Set a preferred namespace
+
+```sh
+kconf use myContext -n kube-system
 ```
 
 ## Why?

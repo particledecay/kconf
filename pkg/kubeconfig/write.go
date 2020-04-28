@@ -74,7 +74,22 @@ func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
 	return nil
 }
 
-// Write current context to file
-func (k *KConf) WriteCurrentContext(currentContext string) {
-	k.Config.CurrentContext = currentContext
+// SetNamespace sets the namespace for the context `contextName`
+func (k *KConf) SetNamespace(contextName, namespace string) error {
+	if _, ok := k.Config.Contexts[contextName]; !ok {
+		return fmt.Errorf("Could not find context '%s'", contextName)
+	}
+	k.Config.Contexts[contextName].Namespace = namespace
+
+	return nil
+}
+
+// SetCurrentContext sets the kubeconfig current context to `currentContext`
+func (k *KConf) SetCurrentContext(contextName string) error {
+	if _, ok := k.Config.Contexts[contextName]; !ok {
+		return fmt.Errorf("Could not find context '%s'", contextName)
+	}
+	k.Config.CurrentContext = contextName
+
+	return nil
 }

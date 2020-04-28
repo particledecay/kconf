@@ -10,6 +10,10 @@ import (
 	"github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
+var (
+	namespaceName string
+)
+
 var useCmd = &cobra.Command{
 	Use:     "use",
 	Short:   "Set the current context",
@@ -29,29 +33,30 @@ var useCmd = &cobra.Command{
 			log.Fatal().Msgf("Could not read main config")
 		}
 
-		contexts, currentContext := config.List()
-		if currentContext == contextName {
-			fmt.Printf("Current context is already '%s'\n", currentContext)
-			return
+		// change the current context
+		err = config.SetCurrentContext(contextName)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+		fmt.Printf("Using context '%s'\n", contextName)
+
+		// change the namespace
+		err = config.SetNamespace(contextName, namespaceName)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+		if namespaceName != "" {
+			fmt.Printf("Setting preferred namespace '%s'\n", namespaceName)
 		}
 
-		hasContext := false
-		for _, ctx := range contexts {
-			if contextName == ctx {
-				hasContext = true
-				break
-			}
-		}
-		if hasContext {
-			config.WriteCurrentContext(contextName)
-			config.Save()
-			if err == nil {
-				fmt.Printf("Using context '%s'\n", contextName)
-			} else {
-				log.Fatal().Msgf("Could not save current context to main config")
-			}
-		} else {
-			fmt.Printf("Context '%s' not found\n", contextName)
+		err = config.Save()
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
 		}
 	},
+}
+
+// flags for this subcommand
+func init() {
+	useCmd.Flags().StringVarP(&namespaceName, "namespace", "n", "", "set a namespace to use")
 }
