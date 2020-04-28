@@ -4,7 +4,7 @@
   <p align="center">
     <a href="https://github.com/particledecay/kconf/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/particledecay/kconf"></a>
     <a href="https://github.com/particledecay/kconf/actions?query=workflow%3Atests"><img alt="GitHub Workflow Status" src="https://github.com/particledecay/kconf/workflows/tests/badge.svg"></a>
-    <a href="https://coveralls.io/github/particledecay/kconf?branch=master"><img alt="Coverage Status" src="https://img.shields.io/coveralls/github/particledecay/kconf/master"></a>
+    <a href='https://coveralls.io/github/particledecay/kconf?branch=master'><img src='https://coveralls.io/repos/github/particledecay/kconf/badge.svg?branch=master' alt='Coverage Status' /></a>
   </p>
 </p>
 
