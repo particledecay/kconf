@@ -27,9 +27,16 @@ jobs:
         with:
           infile: coverage.out
           outfile: coverage.lcov
-      - name: Send code coverage to Coveralls
+      - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.github_token }}
           path-to-lcov: ./coverage.lcov
           flag-name: unit
+      - name: CodeClimate
+        uses: paambaati/codeclimate-action@v2.6.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE }}
+        with:
+          coverageCommand: echo ""
+          coverageLocations: ./coverage.lcov:lcov
