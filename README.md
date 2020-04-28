@@ -39,7 +39,7 @@ kconf rm myContext
 ##### List all saved contexts in the kubeconfig:
 
 ```sh
-kconf list
+kconf ls
 ```
 
 ##### View and print a single context's kubeconfig (you can pipe or export to a file):
