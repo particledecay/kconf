@@ -35,4 +35,12 @@ var removeCmd = &cobra.Command{
 			log.Fatal().Msgf("%v", err)
 		}
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		list, err := getContextsFromConfig(toComplete)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+
+		return list, cobra.ShellCompDirectiveNoFileComp
+	},
 }

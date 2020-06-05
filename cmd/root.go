@@ -9,9 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	verbose bool
-)
+var verbose bool
 
 var rootCmd = &cobra.Command{
 	Use:   "kconf",
@@ -44,6 +42,12 @@ func Execute() {
 	rootCmd.AddCommand(viewCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(completionCmd)
+
+	completionCmd.AddCommand(completionBashCmd)
+	completionCmd.AddCommand(completionFishCmd)
+	completionCmd.AddCommand(completionPowerShellCmd)
+	completionCmd.AddCommand(completionZshCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal().Msgf("Error during execution: %v", err)

@@ -10,9 +10,7 @@ import (
 	"github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
-var (
-	namespaceName string
-)
+var namespaceName string
 
 var useCmd = &cobra.Command{
 	Use:     "use",
@@ -53,6 +51,14 @@ var useCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal().Msgf("%v", err)
 		}
+	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		list, err := getContextsFromConfig(toComplete)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+
+		return list, cobra.ShellCompDirectiveNoFileComp
 	},
 }
 

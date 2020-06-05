@@ -37,4 +37,12 @@ var viewCmd = &cobra.Command{
 		// print config content
 		os.Stdout.Write(content)
 	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		list, err := getContextsFromConfig(toComplete)
+		if err != nil {
+			log.Fatal().Msgf("%v", err)
+		}
+
+		return list, cobra.ShellCompDirectiveNoFileComp
+	},
 }
