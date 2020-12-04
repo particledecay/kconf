@@ -42,6 +42,7 @@ func Execute() {
 	rootCmd.AddCommand(viewCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(namespaceCmd)
 	rootCmd.AddCommand(completionCmd)
 
 	completionCmd.AddCommand(completionBashCmd)
