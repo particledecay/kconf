@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Conform
-        uses: talos-systems/conform
+        uses: talos-systems/conform@master
         with:
           args: --commit-ref=refs/heads/${{ github.base_ref }}
 
