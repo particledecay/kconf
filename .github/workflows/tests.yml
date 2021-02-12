@@ -21,7 +21,7 @@ jobs:
       - name: Conform
         uses: talos-systems/conform@master
         with:
-          args: --commit-ref=refs/heads/${{ github.base_ref }}
+          args: enforce --commit-ref=refs/heads/${{ github.base_ref }}
 
   # for pre-commit
   pre-commit:
