@@ -1,12 +1,16 @@
 policies:
   - type: commit
     spec:
-      headerLength: 72
+      header:
+        length: 89
+        imperative: true
+        case: lower
+        invalidLastCharacters: .
+      body:
+        required: false
       dco: false
-      gpg: false
-      imperative: true
+      gpg: true
       maximumOfOneCommit: true
-      requireCommitBody: false
       conventional:
         types:
           - chore
@@ -21,3 +25,4 @@ policies:
           - cmd
           - pkg
           - build
+        descriptionLength: 72
