@@ -3,34 +3,35 @@ name: tests
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [main]
 
 jobs:
+  # for conform
   conformance:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0
-      - run: |
-          git fetch origin +refs/heads/master:refs/heads/master
+          ref: ${{ github.base_ref }}
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      # conform
       - name: Conform
-        uses: talos-systems/conform@v0.1.0-alpha.17
+        uses: talos-systems/conform
+        with:
+          args: --commit-ref=refs/heads/${{ github.base_ref }}
 
-      # for pre-commit
-      - uses: actions/setup-python@v1
-      - name: Set PY
-        run: echo "::set-env name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')"
-      - uses: actions/cache@v1
+  # for pre-commit
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
         with:
-          path: ~/.cache/pre-commit
-          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - uses: pre-commit/action@v1.0.1
-        with:
-          token: ${{ secrets.github_token }}
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.0
 
   unit-testing:
     runs-on: ubuntu-latest
