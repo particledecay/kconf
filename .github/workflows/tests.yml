@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.base_ref }}
+          ref: ${{ github.event.pull_request.base.sha }}
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -21,7 +21,7 @@ jobs:
       - name: Conform
         uses: talos-systems/conform@master
         with:
-          args: enforce --commit-ref=refs/heads/${{ github.base_ref }}
+          args: enforce --commit-ref=refs/heads/${{ github.event.pull_request.base.ref }}
 
   # for pre-commit
   pre-commit:
