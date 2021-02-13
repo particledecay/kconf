@@ -13,10 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
-      - uses: actions/checkout@v2
-        with:
           ref: ${{ github.event.pull_request.head.ref }}
+      - run: |
+          git fetch origin +refs/heads/${{ github.event.pull_request.base.ref }}:refs/heads/${{ github.event.pull_request.base.ref }}
 
       - name: Conform
         uses: talos-systems/conform@master
