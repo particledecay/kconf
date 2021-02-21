@@ -44,6 +44,7 @@ func Execute() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(namespaceCmd)
 	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(renameCmd)
 
 	completionCmd.AddCommand(completionBashCmd)
 	completionCmd.AddCommand(completionFishCmd)
