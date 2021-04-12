@@ -14,7 +14,7 @@ import (
 func Read(filepath string) (*clientcmdapi.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath)
 	if err != nil {
-		log.Debug().Msgf("Error while reading %s: %v", filepath, err)
+		log.Debug().Err(err).Msgf("Error while reading %s", filepath)
 		return nil, err
 	}
 	return config, nil

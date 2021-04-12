@@ -7,7 +7,7 @@ import (
 
 var _ = Describe("Pkg/Kubeconfig/SetNamespace", func() {
 	It("Should set the namespace in the given context", func() {
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testCtx := "test"
 		testNamespace := "superman"
 
@@ -17,7 +17,7 @@ var _ = Describe("Pkg/Kubeconfig/SetNamespace", func() {
 	})
 
 	It("Should fail if the context does not exist", func() {
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testCtx := "test-1"
 		testNamespace := "superman"
 
@@ -33,7 +33,7 @@ var _ = Describe("Pkg/Kubeconfig/SetNamespace", func() {
 
 var _ = Describe("Pkg/Kubeconfig/SetCurrentContext", func() {
 	It("Should set the current context if the context exists", func() {
-		k := mockConfig(5)
+		k := MockConfig(5)
 		contextName := "test-2"
 
 		err := k.SetCurrentContext(contextName)
@@ -42,7 +42,7 @@ var _ = Describe("Pkg/Kubeconfig/SetCurrentContext", func() {
 	})
 
 	It("Should fail if the context does not exist", func() {
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testCtx := "test-1"
 
 		err := k.SetCurrentContext(testCtx)

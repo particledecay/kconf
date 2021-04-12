@@ -1,4 +1,4 @@
-package build
+package cmd
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func TestBuild(t *testing.T) {
+func TestCmd(t *testing.T) {
 	zerolog.SetGlobalLevel(zerolog.Disabled)
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Build Suite")
+	RunSpecs(t, "Cmd Suite")
 }

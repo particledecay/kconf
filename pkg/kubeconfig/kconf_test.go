@@ -8,40 +8,9 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-// mockConfig generates a mock KConf with `num` number of resources
-func mockConfig(num int) *KConf {
-	config := clientcmdapi.NewConfig()
-	for i := 0; i < num; i++ {
-		var name string
-		if i == 0 {
-			name = "test"
-		} else {
-			name = fmt.Sprintf("test-%d", i)
-		}
-		config.Clusters[name] = &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   fmt.Sprintf("https://example-%s.com:6443", name),
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
-		}
-		config.AuthInfos[name] = &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", name),
-		}
-		config.Contexts[name] = &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          name,
-			AuthInfo:         name,
-			Namespace:        "default",
-		}
-	}
-	return &KConf{Config: *config}
-}
-
 var _ = Describe("Pkg/Kubeconfig/rename", func() {
 	It("Should return the same name if it doesn't already exist as a Context", func() {
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testName := "test"
 		result, err := k.rename(testName, "context")
 
@@ -50,14 +19,14 @@ var _ = Describe("Pkg/Kubeconfig/rename", func() {
 	})
 
 	It("Should return an incremented name if the given name is already taken", func() {
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.rename(testName, "context")
 
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal(fmt.Sprintf("%s-1", testName)))
 
-		k = mockConfig(2)
+		k = MockConfig(2)
 		var keys []string
 		for key := range k.Contexts {
 			keys = append(keys, key)
@@ -69,7 +38,7 @@ var _ = Describe("Pkg/Kubeconfig/rename", func() {
 	})
 
 	It("Should return an error if the type is not recognized", func() {
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.rename(testName, "contextual") // contextual is not a thing
 
@@ -86,7 +55,7 @@ var _ = Describe("Pkg/Kubeconfig/hasContext", func() {
 			AuthInfo:         "test",
 			Namespace:        "default",
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		result := k.hasContext(context)
 
 		Expect(result).To(BeFalse())
@@ -99,7 +68,7 @@ var _ = Describe("Pkg/Kubeconfig/hasContext", func() {
 			AuthInfo:         "testing",
 			Namespace:        "default",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasContext(context)
 
 		Expect(result).To(BeFalse())
@@ -112,7 +81,7 @@ var _ = Describe("Pkg/Kubeconfig/hasContext", func() {
 			AuthInfo:         "test-1",
 			Namespace:        "default",
 		}
-		k := mockConfig(2)
+		k := MockConfig(2)
 		result := k.hasContext(context)
 
 		Expect(result).To(BeTrue())
@@ -125,7 +94,7 @@ var _ = Describe("Pkg/Kubeconfig/hasContext", func() {
 			AuthInfo:         "test-1",
 			Namespace:        "default",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasContext(context)
 
 		Expect(result).To(BeFalse())
@@ -140,7 +109,7 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 			AuthInfo:         "test-1",
 			Namespace:        "default",
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testName := "testContext"
 		result, err := k.AddContext(testName, context)
 
@@ -158,7 +127,7 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 			AuthInfo:         "test",
 			Namespace:        "default",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddContext(testName, context)
 
@@ -176,7 +145,7 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 			AuthInfo:         "test",
 			Namespace:        "default",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddContext(testName, context)
 
@@ -194,7 +163,7 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 			AuthInfo:         "test",
 			Namespace:        "default",
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testName := "test"
 		result, err := k.AddContext(testName, context)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -211,7 +180,7 @@ var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		result := k.hasCluster(cluster)
 
 		Expect(result).To(BeFalse())
@@ -225,7 +194,7 @@ var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasCluster(cluster)
 
 		Expect(result).To(BeFalse())
@@ -239,7 +208,7 @@ var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(2)
+		k := MockConfig(2)
 		result := k.hasCluster(cluster)
 
 		Expect(result).To(BeTrue())
@@ -253,7 +222,7 @@ var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasCluster(cluster)
 
 		Expect(result).To(BeFalse())
@@ -269,7 +238,7 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testName := "testCluster"
 		result, err := k.AddCluster(testName, cluster)
 
@@ -288,7 +257,7 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddCluster(testName, cluster)
 
@@ -307,7 +276,7 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			CertificateAuthority:     "bbbbbbbbbbbb",
 			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddCluster(testName, cluster)
 
@@ -325,7 +294,7 @@ var _ = Describe("Pkg/Kubeconfig/hasUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test",
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		result := k.hasUser(user)
 
 		Expect(result).To(BeFalse())
@@ -336,7 +305,7 @@ var _ = Describe("Pkg/Kubeconfig/hasUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test-1",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasUser(user)
 
 		Expect(result).To(BeFalse())
@@ -347,7 +316,7 @@ var _ = Describe("Pkg/Kubeconfig/hasUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test-1",
 		}
-		k := mockConfig(2)
+		k := MockConfig(2)
 		result := k.hasUser(user)
 
 		Expect(result).To(BeTrue())
@@ -358,7 +327,7 @@ var _ = Describe("Pkg/Kubeconfig/hasUser", func() {
 			LocationOfOrigin: "/home/user/.kube/CONFIG",
 			Token:            "bbbbbbbbbbbb-test",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		result := k.hasUser(user)
 
 		Expect(result).To(BeFalse())
@@ -371,7 +340,7 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test",
 		}
-		k := mockConfig(0)
+		k := MockConfig(0)
 		testName := "testUser"
 		result, err := k.AddUser(testName, user)
 
@@ -387,7 +356,7 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddUser(testName, user)
 
@@ -403,7 +372,7 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 			LocationOfOrigin: "/home/user/.kube/config",
 			Token:            "bbbbbbbbbbbb-test-1",
 		}
-		k := mockConfig(1)
+		k := MockConfig(1)
 		testName := "test"
 		result, err := k.AddUser(testName, user)
 

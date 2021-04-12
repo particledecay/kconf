@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"os"
 
 	"github.com/rs/zerolog"
 
@@ -17,9 +18,16 @@ var rootCmd = &cobra.Command{
 	Long: `kconf allows you to add and delete kubeconfigs by merging kubeconfig
 			files together and breaking them apart appropriately.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
+		// debug mode
 		if verbose {
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		} else {
+			zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		}
+		log.Debug().Msg("debug messaging turned on")
 	},
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 1 {

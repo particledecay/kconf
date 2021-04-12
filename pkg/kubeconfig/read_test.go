@@ -22,7 +22,7 @@ var _ = Describe("Pkg/Kubeconfig/Read", func() {
 var _ = Describe("Pkg/Kubeconfig/List", func() {
 	It("Should return all context names", func() {
 		contexts := []string{}
-		k := mockConfig(3)
+		k := MockConfig(3)
 		for context := range k.Contexts {
 			contexts = append(contexts, context)
 		}
@@ -54,7 +54,7 @@ var _ = Describe("Pkg/Kubeconfig/Export", func() {
 		}
 		config.CurrentContext = contextName
 
-		k := mockConfig(5)
+		k := MockConfig(5)
 
 		// extract the one config out of the mocked configs
 		result, err := k.Export(contextName)
@@ -65,7 +65,7 @@ var _ = Describe("Pkg/Kubeconfig/Export", func() {
 
 	It("Should fail if context doesn't exist", func() {
 		contextName := "test-7"
-		k := mockConfig(5)
+		k := MockConfig(5)
 
 		result, err := k.Export(contextName)
 
@@ -77,7 +77,7 @@ var _ = Describe("Pkg/Kubeconfig/Export", func() {
 var _ = Describe("Pkg/Kubeconfig/GetContent", func() {
 	It("Should properly convert a config into bytes that can be written and used as a separate kubeconfig", func() {
 		contextName := "test-3"
-		k := mockConfig(5)
+		k := MockConfig(5)
 
 		// extract the bytes content
 		content, err := k.GetContent(contextName)
