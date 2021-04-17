@@ -48,3 +48,4 @@ _testmain.go
 debug.test
 /vendor/
 *.coverprofile
+*.lcov
