@@ -47,7 +47,7 @@ jobs:
           go mod vendor
       - name: Run tests
         run: |
-          go test -v -covermode=count -coverprofile=coverage.out ./...
+          ginkgo -r -cover -covermode count -randomizeAllSpecs -randomizeSuites -coverprofile coverage.out -outputdir . -nodes 2
       - name: Convert Go coverage to LCOV
         uses: jandelgado/gcov2lcov-action@v1.0.0
         with:
