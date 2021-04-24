@@ -1,4 +1,4 @@
-package build
+package build_test
 
 import (
 	"io/ioutil"
@@ -6,6 +6,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/particledecay/kconf/build"
 )
 
 var _ = Describe("Build/PrintVersion", func() {
@@ -16,8 +18,8 @@ var _ = Describe("Build/PrintVersion", func() {
 		os.Stdout = w
 
 		// all this function does is print to stdout
-		Version = ""
-		PrintVersion()
+		build.Version = ""
+		build.PrintVersion()
 
 		// read captured stdout
 		w.Close()
@@ -36,8 +38,8 @@ var _ = Describe("Build/PrintVersion", func() {
 		os.Stdout = w
 
 		// all this function does is print to stdout
-		Version = "1.2.3"
-		PrintVersion()
+		build.Version = "1.2.3"
+		build.PrintVersion()
 
 		// read captured stdout
 		w.Close()
@@ -58,8 +60,8 @@ var _ = Describe("Build/PrintLongVersion", func() {
 		os.Stdout = w
 
 		// all this function does is print to stdout
-		Version = ""
-		PrintLongVersion()
+		build.Version = ""
+		build.PrintLongVersion()
 
 		// read captured stdout
 		w.Close()
@@ -78,10 +80,10 @@ var _ = Describe("Build/PrintLongVersion", func() {
 		os.Stdout = w
 
 		// all this function does is print to stdout
-		Version = "1.2.3"
-		Commit = "abcdef1234"
-		Date = "20200101"
-		PrintLongVersion()
+		build.Version = "1.2.3"
+		build.Commit = "abcdef1234"
+		build.Date = "20200101"
+		build.PrintLongVersion()
 
 		// read captured stdout
 		w.Close()

@@ -14,7 +14,9 @@ import (
 func Read(filepath string) (*clientcmdapi.Config, error) {
 	config, err := clientcmd.LoadFromFile(filepath)
 	if err != nil {
-		log.Debug().Err(err).Msgf("Error while reading %s", filepath)
+		log.Debug().
+			Err(err).
+			Msgf("error while reading '%s'", filepath)
 		return nil, err
 	}
 	return config, nil
@@ -57,7 +59,7 @@ func (k *KConf) List() ([]string, string) {
 func (k *KConf) Export(name string) (*clientcmdapi.Config, error) {
 	context, ok := k.Contexts[name]
 	if !ok { // the context never existed
-		return nil, fmt.Errorf("Could not find context '%s'", name)
+		return nil, fmt.Errorf("could not find context '%s'", name)
 	}
 
 	// create new config for only this context
@@ -74,13 +76,13 @@ func (k *KConf) Export(name string) (*clientcmdapi.Config, error) {
 func (k *KConf) GetContent(name string) ([]byte, error) {
 	config, err := k.Export(name)
 	if err != nil {
-		log.Debug().Msgf("Could not export context '%s'", name)
+		log.Debug().Msgf("could not export context '%s'", name)
 		return []byte{}, err
 	}
 
 	content, err := clientcmd.Write(*config)
 	if err != nil {
-		log.Debug().Msgf("Error in clientcmd.Write command for context '%s'", name)
+		log.Debug().Msgf("error in clientcmd.Write command for context '%s'", name)
 		return []byte{}, err
 	}
 

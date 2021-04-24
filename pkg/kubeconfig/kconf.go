@@ -34,14 +34,14 @@ func init() {
 }
 
 // AddContext attempts to add a Context and return the resulting name
-func (k *KConf) AddContext(name string, context *clientcmdapi.Context) (string, error) {
+func (k *KConf) AddContext(name string, context *clientcmdapi.Context) string {
 	if k.hasContext(context) {
-		return "", nil
+		return ""
 	}
 	name, _ = k.rename(name, "context")
 
 	k.Config.Contexts[name] = context
-	return name, nil
+	return name
 }
 
 // hasContext checks whether the KConf already contains the given Context
@@ -57,14 +57,14 @@ func (k *KConf) hasContext(context *clientcmdapi.Context) bool {
 }
 
 // AddCluster attempts to add a Cluster and return the resulting name
-func (k *KConf) AddCluster(name string, cluster *clientcmdapi.Cluster) (string, error) {
+func (k *KConf) AddCluster(name string, cluster *clientcmdapi.Cluster) string {
 	if k.hasCluster(cluster) {
-		return "", nil
+		return ""
 	}
 	name, _ = k.rename(name, "cluster")
 
 	k.Config.Clusters[name] = cluster
-	return name, nil
+	return name
 }
 
 // hasCluster checks whether the KConf already contains the given Cluster
@@ -80,14 +80,14 @@ func (k *KConf) hasCluster(cluster *clientcmdapi.Cluster) bool {
 }
 
 // AddUser attempts to add an AuthInfo and return the resulting name
-func (k *KConf) AddUser(name string, user *clientcmdapi.AuthInfo) (string, error) {
+func (k *KConf) AddUser(name string, user *clientcmdapi.AuthInfo) string {
 	if k.hasUser(user) {
-		return "", nil
+		return ""
 	}
 	name, _ = k.rename(name, "user")
 
 	k.Config.AuthInfos[name] = user
-	return name, nil
+	return name
 }
 
 // hasUser checks whether the KConf already contains the given AuthInfo
@@ -106,22 +106,39 @@ func (k *KConf) rename(name string, objType string) (string, error) {
 	inc := 1
 	origName := name
 	for {
-		if objType == "context" {
+		switch objType {
+		case "context":
 			if _, ok := k.Contexts[name]; !ok {
 				return name, nil
 			}
-		} else if objType == "cluster" {
+		case "cluster":
 			if _, ok := k.Clusters[name]; !ok {
 				return name, nil
 			}
-		} else if objType == "user" {
+		case "user":
 			if _, ok := k.AuthInfos[name]; !ok {
 				return name, nil
 			}
-		} else {
+		default:
 			return "", fmt.Errorf("unrecognized type '%s'", objType)
 		}
+
 		name = fmt.Sprintf("%s-%d", origName, inc)
 		inc++
 	}
+}
+
+func (k *KConf) MoveContext(oldName, newName string) error {
+	ctx, ok := k.Contexts[oldName]
+	if !ok {
+		return fmt.Errorf("no existing context named '%s'", oldName)
+	}
+	if _, ok := k.Contexts[newName]; ok {
+		return fmt.Errorf("context named '%s' already exists", newName)
+	}
+
+	k.Contexts[newName] = ctx
+	delete(k.Contexts, oldName)
+
+	return nil
 }

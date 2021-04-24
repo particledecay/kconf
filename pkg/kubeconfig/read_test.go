@@ -1,18 +1,22 @@
-package kubeconfig
+package kubeconfig_test
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	kc "github.com/particledecay/kconf/pkg/kubeconfig"
+	. "github.com/particledecay/kconf/test"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 var _ = Describe("Pkg/Kubeconfig/Read", func() {
 	It("Should fail if kubeconfig doesn't exist", func() {
-		config, err := Read("/some/nonexistent/path")
+		config, err := kc.Read("/some/nonexistent/path")
 
 		Expect(config).To(BeNil())
 		Expect(err).Should(HaveOccurred())
@@ -90,5 +94,46 @@ var _ = Describe("Pkg/Kubeconfig/GetContent", func() {
 
 		Expect(config).ToNot(BeNil())
 		Expect(err).ShouldNot(HaveOccurred())
+	})
+})
+
+var _ = Describe("Pkg/Kubeconfig/GetConfig", func() {
+	It("Should return a kubeconfig", func() {
+		k := MockConfig(1)
+
+		// create a random file to ensure a config exists
+		tmpfile, err := ioutil.TempFile("", "test-config-5")
+		if err != nil {
+			panic(err)
+		}
+		kc.MainConfigPath = tmpfile.Name()
+		err = k.Save()
+		if err != nil {
+			panic(err)
+		}
+
+		k2, err := kc.GetConfig()
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k2).To(ContainContext("test"))
+	})
+
+	It("Should create a new kubeconfig if a file doesn't already exist", func() {
+		// create a random file to ensure a config exists
+		tmpfile, err := ioutil.TempFile("", "test-config-6")
+		if err != nil {
+			panic(err)
+		}
+		filename := tmpfile.Name()
+		err = os.Remove(filename)
+		if err != nil {
+			panic(err)
+		}
+		kc.MainConfigPath = filename
+
+		k, err := kc.GetConfig()
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k.Contexts).To(BeEmpty())
 	})
 })

@@ -12,54 +12,55 @@ import (
 
 var verbose bool
 
-var rootCmd = &cobra.Command{
-	Use:   "kconf",
-	Short: "kconf manages your kubeconfigs",
-	Long: `kconf allows you to add and delete kubeconfigs by merging kubeconfig
-			files together and breaking them apart appropriately.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+func rootCmd() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "kconf",
+		Short: "kconf manages your kubeconfigs",
+		Long: `kconf allows you to add and delete kubeconfigs by merging kubeconfig
+				files together and breaking them apart appropriately.`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+			zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-		// debug mode
-		if verbose {
-			zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		} else {
-			zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		}
-		log.Debug().Msg("debug messaging turned on")
-	},
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("An action is required")
-		}
-		return nil
-	},
-}
+			// debug mode
+			if verbose {
+				zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			} else {
+				zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			}
+			log.Debug().Msg("debug messaging turned on")
+		},
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("an action is required")
+			}
+			return nil
+		},
+	}
+	command.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
 
-func init() {
-	// flags
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "display debug messages")
+	return command
 }
 
 // Execute combines all of the available command functions
 func Execute() {
-	rootCmd.AddCommand(addCmd)
-	rootCmd.AddCommand(removeCmd)
-	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(viewCmd)
-	rootCmd.AddCommand(useCmd)
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(namespaceCmd)
-	rootCmd.AddCommand(completionCmd)
-	rootCmd.AddCommand(renameCmd)
+	root := rootCmd()
+	root.AddCommand(AddCmd())
+	root.AddCommand(RemoveCmd())
+	root.AddCommand(ListCmd())
+	root.AddCommand(ViewCmd())
+	root.AddCommand(UseCmd())
+	root.AddCommand(VersionCmd())
+	root.AddCommand(NamespaceCmd())
+	root.AddCommand(RenameCmd())
 
-	completionCmd.AddCommand(completionBashCmd)
-	completionCmd.AddCommand(completionFishCmd)
-	completionCmd.AddCommand(completionPowerShellCmd)
-	completionCmd.AddCommand(completionZshCmd)
+	completion := CompletionCmd()
+	completion.AddCommand(completionBashCmd(root))
+	completion.AddCommand(completionFishCmd(root))
+	completion.AddCommand(completionPowerShellCmd(root))
+	completion.AddCommand(completionZshCmd(root))
+	root.AddCommand(completion)
 
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatal().Msgf("Error during execution: %v", err)
-	}
+	err := root.Execute()
+	failOnError("", err)
 }

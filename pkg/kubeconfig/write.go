@@ -12,41 +12,37 @@ import (
 func (k *KConf) Save() error {
 	err := clientcmd.WriteToFile(k.Config, MainConfigPath)
 	if err != nil {
-		log.Debug().Msgf("Error while writing main config: %v", err)
+		log.Debug().
+			Err(err).
+			Msgf("error while writing main config: %v", err)
 		return err
 	}
 	return nil
 }
 
 // Merge takes a config and combines it into a config file
-func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
+func (k *KConf) Merge(config *clientcmdapi.Config, name string) {
 	renamedClusters := make(map[string]string)
 	renamedUsers := make(map[string]string)
 
 	for clsName, cls := range config.Clusters {
-		added, err := k.AddCluster(clsName, cls)
-		if err != nil {
-			return err
-		}
+		added := k.AddCluster(clsName, cls)
 		if added != "" { // this cluster was newly added
 			if added != clsName {
-				fmt.Printf("Renamed cluster '%s' to '%s'\n", clsName, added)
+				Out.Log().Msgf("renamed cluster '%s' to '%s'", clsName, added)
 				renamedClusters[clsName] = added
 			}
-			fmt.Printf("Added cluster '%s'\n", added)
+			Out.Log().Msgf("added cluster '%s'", added)
 		}
 	}
 	for uName, user := range config.AuthInfos {
-		added, err := k.AddUser(uName, user)
-		if err != nil {
-			return err
-		}
+		added := k.AddUser(uName, user)
 		if added != "" { // this user was newly added
 			if added != uName {
-				fmt.Printf("Renamed user '%s' to '%s'\n", uName, added)
+				Out.Log().Msgf("renamed user '%s' to '%s'", uName, added)
 				renamedUsers[uName] = added
 			}
-			fmt.Printf("Added user '%s'\n", added)
+			Out.Log().Msgf("added user '%s'", added)
 		}
 	}
 	for ctxName, ctx := range config.Contexts {
@@ -60,24 +56,20 @@ func (k *KConf) Merge(config *clientcmdapi.Config, name string) error {
 		if name == "" {
 			name = ctxName
 		}
-		added, err := k.AddContext(name, ctx)
-		if err != nil {
-			return err
-		}
+		added := k.AddContext(name, ctx)
 		if added != "" { // this context was newly added
 			if added != ctxName {
-				fmt.Printf("Renamed context '%s' to '%s'\n", ctxName, added)
+				Out.Log().Msgf("renamed context '%s' to '%s'", ctxName, added)
 			}
-			fmt.Printf("Added context '%s'\n", added)
+			Out.Log().Msgf("added context '%s'", added)
 		}
 	}
-	return nil
 }
 
 // SetNamespace sets the namespace for the context `contextName`
 func (k *KConf) SetNamespace(contextName, namespace string) error {
 	if _, ok := k.Config.Contexts[contextName]; !ok {
-		return fmt.Errorf("Could not find context '%s'", contextName)
+		return fmt.Errorf("could not find context '%s'", contextName)
 	}
 	k.Config.Contexts[contextName].Namespace = namespace
 
@@ -87,7 +79,7 @@ func (k *KConf) SetNamespace(contextName, namespace string) error {
 // SetCurrentContext sets the kubeconfig current context to `currentContext`
 func (k *KConf) SetCurrentContext(contextName string) error {
 	if _, ok := k.Config.Contexts[contextName]; !ok {
-		return fmt.Errorf("Could not find context '%s'", contextName)
+		return fmt.Errorf("could not find context '%s'", contextName)
 	}
 	k.Config.CurrentContext = contextName
 

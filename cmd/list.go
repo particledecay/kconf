@@ -1,32 +1,36 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/particledecay/kconf/pkg/kubeconfig"
+	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Short:   "List all saved contexts",
-	Long:    `Print a list of all contexts previously saved in kubeconfig`,
-	Aliases: []string{"ls"},
-	Args:    cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		config, err := kubeconfig.GetConfig()
-		if err != nil {
-			log.Fatal().Msgf("Could not read main config")
-		}
-		contexts, currentContext := config.List()
-		for _, ctx := range contexts {
-			if currentContext == ctx {
-				fmt.Println("*", ctx)
-			} else {
-				fmt.Println(" ", ctx)
+// ListCmd displays all of the stored contexts in the kubeconfig file
+func ListCmd() *cobra.Command {
+	command := &cobra.Command{
+		Use:     "list",
+		Short:   "List all saved contexts",
+		Long:    `Print a list of all contexts previously saved in kubeconfig`,
+		Aliases: []string{"ls"},
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			config, err := kc.GetConfig()
+			if err != nil {
+				return err
 			}
-		}
-	},
+			contexts, currentContext := config.List()
+			for _, ctx := range contexts {
+				if currentContext == ctx {
+					kc.Out.Log().Msgf("* %s", ctx)
+				} else {
+					kc.Out.Log().Msgf("  %s", ctx)
+				}
+			}
+
+			return nil
+		},
+	}
+
+	return command
 }

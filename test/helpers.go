@@ -43,30 +43,26 @@ func MockConfig(num int) *kc.KConf {
 			Namespace:        "default",
 		}
 	}
+
+	tmpfile, _ := MakeTmpFile()
+	kc.MainConfigPath = tmpfile.Name()
+
 	return &kc.KConf{Config: *config}
 }
 
-// WriteTmpConfig writes a kubeconfig to a temporary file instead of the default location
-func WriteTmpConfig(config *kc.KConf) error {
+// MakeTmpConfig creates a new, empty file to be used as a kubeconfig
+func MakeTmpFile() (*os.File, error) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	tmpfile, err := ioutil.TempFile("", fmt.Sprintf("config-%d", r1))
+	tmpfile, err := ioutil.TempFile("", fmt.Sprintf("config-%d", r1.Intn(1000)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// for later removal
 	tmpfiles = append(tmpfiles, tmpfile.Name())
 
-	// override the default kubeconfig path
-	kc.MainConfigPath = tmpfile.Name()
-
-	err = config.Save()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tmpfile, nil
 }
 
 // CleanupFiles removes any temporary files created during tests

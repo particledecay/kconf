@@ -7,10 +7,16 @@ import (
 
 // GetRestConfig returns a rest.Config from a KConf type
 func GetRestConfig(config *KConf) (*rest.Config, error) {
-	apiConfig := config.Config
+	content, err := config.GetContent(config.CurrentContext)
+	if err != nil {
+		return nil, err
+	}
 
 	// first get the DirectClientConfig
-	clientConfig := clientcmd.NewDefaultClientConfig(apiConfig, &clientcmd.ConfigOverrides{})
+	clientConfig, err := clientcmd.NewClientConfigFromBytes(content)
+	if err != nil {
+		return nil, err
+	}
 
 	// get the rest.Config
 	restConfig, err := clientConfig.ClientConfig()

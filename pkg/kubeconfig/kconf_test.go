@@ -1,105 +1,12 @@
-package kubeconfig
+package kubeconfig_test
 
 import (
-	"fmt"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	. "github.com/particledecay/kconf/test"
 )
-
-var _ = Describe("Pkg/Kubeconfig/rename", func() {
-	It("Should return the same name if it doesn't already exist as a Context", func() {
-		k := MockConfig(0)
-		testName := "test"
-		result, err := k.rename(testName, "context")
-
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(result).To(Equal(testName))
-	})
-
-	It("Should return an incremented name if the given name is already taken", func() {
-		k := MockConfig(1)
-		testName := "test"
-		result, err := k.rename(testName, "context")
-
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(result).To(Equal(fmt.Sprintf("%s-1", testName)))
-
-		k = MockConfig(2)
-		var keys []string
-		for key := range k.Contexts {
-			keys = append(keys, key)
-		}
-		result, err = k.rename(testName, "context")
-
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(result).To(Equal(fmt.Sprintf("%s-2", testName)))
-	})
-
-	It("Should return an error if the type is not recognized", func() {
-		k := MockConfig(1)
-		testName := "test"
-		result, err := k.rename(testName, "contextual") // contextual is not a thing
-
-		Expect(err).Should(HaveOccurred())
-		Expect(result).To(BeEmpty())
-	})
-})
-
-var _ = Describe("Pkg/Kubeconfig/hasContext", func() {
-	It("Should return false with an empty context", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test",
-			AuthInfo:         "test",
-			Namespace:        "default",
-		}
-		k := MockConfig(0)
-		result := k.hasContext(context)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return false if the context does not already exist", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "testing",
-			AuthInfo:         "testing",
-			Namespace:        "default",
-		}
-		k := MockConfig(1)
-		result := k.hasContext(context)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return true if the context exists", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test-1",
-			AuthInfo:         "test-1",
-			Namespace:        "default",
-		}
-		k := MockConfig(2)
-		result := k.hasContext(context)
-
-		Expect(result).To(BeTrue())
-	})
-
-	It("Should not return true if the context name is the same but other properties are not", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test",
-			AuthInfo:         "test-1",
-			Namespace:        "default",
-		}
-		k := MockConfig(1)
-		result := k.hasContext(context)
-
-		Expect(result).To(BeFalse())
-	})
-})
 
 var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 	It("Should add a context if it does not already exist in the kubeconfig", func() {
@@ -111,9 +18,8 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 		}
 		k := MockConfig(0)
 		testName := "testContext"
-		result, err := k.AddContext(testName, context)
+		result := k.AddContext(testName, context)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal(testName))
 		Expect(k.Contexts).Should(HaveKey(testName))
 
@@ -129,9 +35,8 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddContext(testName, context)
+		result := k.AddContext(testName, context)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(BeEmpty())
 		Expect(k.Contexts).Should(HaveKey(testName))
 
@@ -147,9 +52,8 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddContext(testName, context)
+		result := k.AddContext(testName, context)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal("test-1"))
 		Expect(k.Contexts).Should(HaveKey("test-1"))
 
@@ -165,67 +69,8 @@ var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
 		}
 		k := MockConfig(0)
 		testName := "test"
-		result, err := k.AddContext(testName, context)
-		Expect(err).ShouldNot(HaveOccurred())
+		result := k.AddContext(testName, context)
 		Expect(result).To(Equal(testName))
-	})
-})
-
-var _ = Describe("Pkg/Kubeconfig/hasCluster", func() {
-	It("Should return false with an empty config", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test.com:6443",
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
-		}
-		k := MockConfig(0)
-		result := k.hasCluster(cluster)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return false if the cluster does not already exist", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test-1.com:6443",
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
-		}
-		k := MockConfig(1)
-		result := k.hasCluster(cluster)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return true if the cluster exists", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test-1.com:6443",
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
-		}
-		k := MockConfig(2)
-		result := k.hasCluster(cluster)
-
-		Expect(result).To(BeTrue())
-	})
-
-	It("Should not return true if the server is the same but other properties are not", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test-1.com:6443",
-			InsecureSkipTLSVerify:    false,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
-		}
-		k := MockConfig(1)
-		result := k.hasCluster(cluster)
-
-		Expect(result).To(BeFalse())
 	})
 })
 
@@ -240,9 +85,8 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 		}
 		k := MockConfig(0)
 		testName := "testCluster"
-		result, err := k.AddCluster(testName, cluster)
+		result := k.AddCluster(testName, cluster)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal(testName))
 		Expect(k.Clusters).Should(HaveKey(testName))
 
@@ -259,9 +103,8 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddCluster(testName, cluster)
+		result := k.AddCluster(testName, cluster)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(BeEmpty())
 		Expect(k.Clusters).Should(HaveKey(testName))
 
@@ -278,59 +121,12 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddCluster(testName, cluster)
+		result := k.AddCluster(testName, cluster)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal("test-1"))
 		Expect(k.Clusters).Should(HaveKey("test-1"))
 
 		Expect(k.Clusters["test-1"].InsecureSkipTLSVerify).To(BeFalse())
-	})
-})
-
-var _ = Describe("Pkg/Kubeconfig/hasUser", func() {
-	It("Should return false with an empty config", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test",
-		}
-		k := MockConfig(0)
-		result := k.hasUser(user)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return false if the user does not already exist", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test-1",
-		}
-		k := MockConfig(1)
-		result := k.hasUser(user)
-
-		Expect(result).To(BeFalse())
-	})
-
-	It("Should return true if the user exists", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test-1",
-		}
-		k := MockConfig(2)
-		result := k.hasUser(user)
-
-		Expect(result).To(BeTrue())
-	})
-
-	It("Should not return true if the one field is the same but others are not", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/CONFIG",
-			Token:            "bbbbbbbbbbbb-test",
-		}
-		k := MockConfig(1)
-		result := k.hasUser(user)
-
-		Expect(result).To(BeFalse())
 	})
 })
 
@@ -342,9 +138,8 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 		}
 		k := MockConfig(0)
 		testName := "testUser"
-		result, err := k.AddUser(testName, user)
+		result := k.AddUser(testName, user)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal(testName))
 		Expect(k.AuthInfos).Should(HaveKey(testName))
 
@@ -358,9 +153,8 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddUser(testName, user)
+		result := k.AddUser(testName, user)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(BeEmpty())
 		Expect(k.AuthInfos).Should(HaveKey(testName))
 
@@ -374,12 +168,36 @@ var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
 		}
 		k := MockConfig(1)
 		testName := "test"
-		result, err := k.AddUser(testName, user)
+		result := k.AddUser(testName, user)
 
-		Expect(err).ShouldNot(HaveOccurred())
 		Expect(result).To(Equal("test-1"))
 		Expect(k.AuthInfos).Should(HaveKey("test-1"))
 
 		Expect(k.AuthInfos["test-1"].Token).To(Equal("bbbbbbbbbbbb-test-1"))
+	})
+})
+
+var _ = Describe("Pkg/Kubeconfig/MoveContext", func() {
+	It("Should move an existing context to a new context", func() {
+		k := MockConfig(1)
+		err := k.MoveContext("test", "test-44")
+
+		Expect(err).NotTo(HaveOccurred())
+		Expect(k).To(ContainContext("test-44"))
+	})
+
+	It("Should fail if moving a context that doesn't exist", func() {
+		k := MockConfig(1)
+		err := k.MoveContext("test-3", "test-44")
+
+		Expect(err).To(HaveOccurred())
+		Expect(k).NotTo(ContainContext("test-44"))
+	})
+
+	It("Should fail if the new context name already exists", func() {
+		k := MockConfig(2)
+		err := k.MoveContext("test", "test-1")
+
+		Expect(err).To(HaveOccurred())
 	})
 })

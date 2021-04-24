@@ -2,55 +2,54 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
-var (
-	contextName string
-)
+// AddCmd merges a new kubeconfig into the existing kubeconfig file
+func AddCmd() *cobra.Command {
+	var contextName string
 
-var addCmd = &cobra.Command{
-	Use:     "add",
-	Short:   "Add in a new kubeconfig file and optional context name",
-	Long:    `Add a new kubeconfig file to the existing merged config file and optional context name`,
-	Aliases: []string{"a"},
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("You must supply the path to a kubeconfig file")
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		filepath := args[0]
-		config, err := kubeconfig.GetConfig()
-		if err != nil {
-			log.Fatal().Msgf("Error while reading main config: %v", err)
-		}
+	command := &cobra.Command{
+		Use:     "add",
+		Short:   "Add in a new kubeconfig file and optional context name",
+		Long:    `Add a new kubeconfig file to the existing merged config file and optional context name`,
+		Aliases: []string{"a"},
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("you must supply the path to a kubeconfig file")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			filepath := args[0]
+			config, err := kubeconfig.GetConfig()
+			if err != nil {
+				return err
+			}
+			if config == nil {
+				return fmt.Errorf("could not find kubeconfig at '%s'", filepath)
+			}
 
-		newConfig, err := kubeconfig.Read(filepath)
-		if err != nil {
-			log.Fatal().Msgf("Error while reading %s: %v", filepath, err)
-		}
-		if config == nil {
-			log.Fatal().Msgf("Could not find kubeconfig at %s", filepath)
-		}
+			newConfig, err := kubeconfig.Read(filepath)
+			if err != nil {
+				return err
+			}
 
-		err = config.Merge(newConfig, contextName)
-		if err != nil {
-			log.Fatal().Msgf("%v", err)
-		}
-		err = config.Save()
-		if err != nil {
-			log.Fatal().Msgf("%v", err)
-		}
-	},
-}
+			config.Merge(newConfig, contextName)
+			err = config.Save()
+			if err != nil {
+				return err
+			}
 
-// flags for this subcommand
-func init() {
-	addCmd.Flags().StringVarP(&contextName, "context-name", "n", "", "override context name")
+			return nil
+
+		},
+	}
+	command.Flags().StringVarP(&contextName, "context-name", "n", "", "override context name")
+
+	return command
 }
