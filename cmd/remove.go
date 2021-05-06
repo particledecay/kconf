@@ -28,6 +28,8 @@ func RemoveCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			cmd.SilenceUsage = true
+
 			err = config.Remove(contextName)
 			if err != nil {
 				return err
