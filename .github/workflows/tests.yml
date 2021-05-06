@@ -45,6 +45,9 @@ jobs:
       - name: Install dependencies
         run: |
           go mod vendor
+      - name: Install Ginkgo
+        run: |
+          go get github.com/onsi/ginkgo/ginkgo
       - name: Run tests
         run: |
           ginkgo -r -cover -covermode count -randomizeAllSpecs -randomizeSuites -coverprofile coverage.out -outputdir . -nodes 2
