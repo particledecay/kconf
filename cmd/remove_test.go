@@ -1,6 +1,9 @@
 package cmd_test
 
 import (
+	"os"
+	"path"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
@@ -9,6 +12,13 @@ import (
 )
 
 var _ = Describe("Cmd/RemoveCmd", func() {
+
+	// restore the original config path to avoid weirdness
+	AfterEach(func() {
+		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
+		CleanupFiles()
+	})
+
 	It("Should remove a context from the kubeconfig", func() {
 		k := MockConfig(1)
 		err := k.Save()
