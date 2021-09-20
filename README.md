@@ -56,8 +56,15 @@ kconf use myContext
 ##### Set a preferred namespace
 
 ```sh
-kconf use myContext -n kube-system
+kconf use myContext -n my-namespace
 ```
+
+or
+
+```sh
+kconf ns my-namespace
+```
+
 
 ## Why?
 
