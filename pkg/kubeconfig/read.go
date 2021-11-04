@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sort"
 
@@ -12,7 +13,16 @@ import (
 
 // Read loads a kubeconfig file and returns an api.Config (client-go) type
 func Read(filepath string) (*clientcmdapi.Config, error) {
-	config, err := clientcmd.LoadFromFile(filepath)
+	var config *clientcmdapi.Config
+	var err error
+
+	if filepath == "" && HasPipeData() {
+		pipedData, _ := io.ReadAll(os.Stdin)
+		config, err = clientcmd.Load(pipedData)
+	} else {
+		config, err = clientcmd.LoadFromFile(filepath)
+	}
+
 	if err != nil {
 		log.Debug().
 			Err(err).

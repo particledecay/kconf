@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"sort"
 
 	. "github.com/onsi/ginkgo"
@@ -15,11 +16,45 @@ import (
 )
 
 var _ = Describe("Pkg/Kubeconfig/Read", func() {
+	BeforeEach(func() {
+		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
+	})
+
 	It("Should fail if kubeconfig doesn't exist", func() {
 		config, err := kc.Read("/some/nonexistent/path")
 
 		Expect(config).To(BeNil())
 		Expect(err).Should(HaveOccurred())
+	})
+
+	It("Should read and return a valid kubeconfig", func() {
+		_ = MockConfig(1)
+		config, err := kc.Read(kc.MainConfigPath)
+
+		Expect(config).NotTo(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
+	})
+
+	It("Should read a kubeconfig from stdin", func() {
+		// redirect stdin
+		oldStdin := os.Stdin
+		r, w, _ := os.Pipe()
+		os.Stdin = r
+
+		// write some data to stdin
+		_ = MockConfig(1)
+		confdata, _ := os.ReadFile(kc.MainConfigPath)
+		w.Write(confdata)
+		w.Close()
+
+		// run function to read from stdin
+		config, err := kc.Read("")
+
+		// restore stdin
+		os.Stdin = oldStdin
+
+		Expect(config).NotTo(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 })
 
