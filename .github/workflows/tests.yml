@@ -4,6 +4,8 @@ name: tests
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   # for conform
