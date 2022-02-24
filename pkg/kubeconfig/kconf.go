@@ -128,6 +128,7 @@ func (k *KConf) rename(name string, objType string) (string, error) {
 	}
 }
 
+// MoveContext renames an existing context
 func (k *KConf) MoveContext(oldName, newName string) error {
 	ctx, ok := k.Contexts[oldName]
 	if !ok {

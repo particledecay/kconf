@@ -2,25 +2,25 @@
 # installation: `pre-commit install -t pre-commit -t commit-msg`
 repos:
   - repo: https://github.com/talos-systems/conform
-    rev: master
+    rev: v0.1.0-alpha.25
     hooks:
       - id: conform
         stages:
           - commit-msg
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v4.1.0
     hooks:
     - id: check-merge-conflict
     - id: end-of-file-fixer
     - id: trailing-whitespace
   - repo: https://github.com/Yelp/detect-secrets
-    rev: master
+    rev: v1.2.0
     hooks:
       - id: detect-secrets
         exclude: go.*
-  - repo: https://github.com/Bahjat/pre-commit-golang
-    rev: master
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.0
     hooks:
-      - id: go-fmt-import
+      - id: go-fmt
       - id: go-vet
       - id: go-lint

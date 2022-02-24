@@ -93,7 +93,7 @@ func getNamespacesFromConfig(partial string) (out []string, err error) {
 
 	// fail if we have no current context
 	if config.CurrentContext == "" {
-		return []string{""}, errors.New("No current context detected. You must set one first with the `use` command.")
+		return []string{""}, errors.New("no current context detected, you must set one first with the `use` command")
 	}
 
 	restConfig, err := kc.GetRestConfig(config)

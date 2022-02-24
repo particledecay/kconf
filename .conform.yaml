@@ -10,7 +10,7 @@ policies:
         required: false
       dco: false
       gpg: true
-      maximumOfOneCommit: true
+      maximumOfOneCommit: false
       conventional:
         types:
           - chore

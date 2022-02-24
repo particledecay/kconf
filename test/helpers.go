@@ -50,7 +50,7 @@ func MockConfig(num int) *kc.KConf {
 	return &kc.KConf{Config: *config}
 }
 
-// MakeTmpConfig creates a new, empty file to be used as a kubeconfig
+// MakeTmpFile creates a new, empty file to be used as a kubeconfig
 func MakeTmpFile() (*os.File, error) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
