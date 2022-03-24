@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
 	. "github.com/particledecay/kconf/test"
@@ -48,7 +48,6 @@ var _ = Describe("Cmd/ViewCmd", func() {
 		os.Args = origArgs[:]
 
 		Expect(out).To(ContainSubstring("test-2"))
-		Expect(out).To(ContainSubstring("certificate-authority: bbbb"))
 	})
 
 	It("Should fail if no arguments are provided", func() {

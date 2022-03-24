@@ -9,12 +9,15 @@ func (k *KConf) Remove(name string) error {
 		return fmt.Errorf("could not find context '%s'", name)
 	}
 
-	Out.Log().Msgf("removing '%s' user", context.AuthInfo)
-	delete(k.AuthInfos, context.AuthInfo)
-	Out.Log().Msgf("removing '%s' cluster", context.Cluster)
+	users := k.contextsWithUser(context.AuthInfo)
+	if len(users) == 1 { // it's just this context
+		delete(k.AuthInfos, context.AuthInfo)
+		Out.Log().Msgf("removed '%s' user", context.AuthInfo)
+	}
 	delete(k.Clusters, context.Cluster)
-	Out.Log().Msgf("removing '%s' context", name)
+	Out.Log().Msgf("removed '%s' cluster", context.Cluster)
 	delete(k.Contexts, name)
+	Out.Log().Msgf("removed '%s' context", name)
 
 	return k.Save()
 }

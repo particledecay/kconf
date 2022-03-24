@@ -7,7 +7,7 @@ import (
 	"path"
 	"sort"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
@@ -78,8 +78,8 @@ var _ = Describe("Pkg/Kubeconfig/Export", func() {
 			LocationOfOrigin:         "/home/user/.kube/config",
 			Server:                   fmt.Sprintf("https://example-%s.com:6443", contextName),
 			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+			CertificateAuthorityData: DummyCert.Raw,
 		}
 		config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
 			LocationOfOrigin: "/home/user/.kube/config",
