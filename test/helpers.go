@@ -1,8 +1,11 @@
 package test
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"math/rand"
 	"os"
 	"time"
@@ -14,6 +17,25 @@ import (
 
 // stores the filepaths for cleanup
 var tmpfiles []string
+
+// DummyCert is a fake certificate we can use for testing
+var DummyCert = &x509.Certificate{
+	SerialNumber: big.NewInt(2019),
+	Subject: pkix.Name{
+		Organization:  []string{"Company, INC."},
+		Country:       []string{"US"},
+		Province:      []string{"FL"},
+		Locality:      []string{"Miami"},
+		StreetAddress: []string{"100 SE 2nd St"},
+		PostalCode:    []string{"33131"},
+	},
+	NotBefore:             time.Now(),
+	NotAfter:              time.Now().AddDate(10, 0, 0),
+	IsCA:                  true,
+	ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+	KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	BasicConstraintsValid: true,
+}
 
 // MockConfig generates a mock KConf with `num` number of resources
 func MockConfig(num int) *kc.KConf {
@@ -29,8 +51,8 @@ func MockConfig(num int) *kc.KConf {
 			LocationOfOrigin:         "/home/user/.kube/config",
 			Server:                   fmt.Sprintf("https://example-%s.com:6443", name),
 			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+			CertificateAuthorityData: DummyCert.Raw,
 		}
 		config.AuthInfos[name] = &clientcmdapi.AuthInfo{
 			LocationOfOrigin: "/home/user/.kube/config",

@@ -32,6 +32,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-python@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - run: |
+          go get -u golang.org/x/lint/golint
       - uses: pre-commit/action@v2.0.0
 
   unit-testing:
@@ -49,10 +54,10 @@ jobs:
           go mod vendor
       - name: Install Ginkgo
         run: |
-          go get github.com/onsi/ginkgo/ginkgo
+          go install github.com/onsi/ginkgo/v2/ginkgo@latest
       - name: Run tests
         run: |
-          ginkgo -r -cover -covermode count -randomizeAllSpecs -randomizeSuites -coverprofile coverage.out -outputdir . -nodes 2
+          ginkgo -r -cover -covermode count --randomize-all --randomize-suites -coverprofile coverage.out --output-dir . -nodes 2
       - name: Convert Go coverage to LCOV
         uses: jandelgado/gcov2lcov-action@v1.0.0
         with:

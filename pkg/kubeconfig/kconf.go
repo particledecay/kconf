@@ -143,3 +143,16 @@ func (k *KConf) MoveContext(oldName, newName string) error {
 
 	return nil
 }
+
+// contextsWithUser returns a slice of context names that use a specific AuthInfo
+func (k *KConf) contextsWithUser(name string) []string {
+	contexts := []string{}
+
+	for ctxName, ctx := range k.Contexts {
+		if ctx.AuthInfo == name {
+			contexts = append(contexts, ctxName)
+		}
+	}
+
+	return contexts
+}

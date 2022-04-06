@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"

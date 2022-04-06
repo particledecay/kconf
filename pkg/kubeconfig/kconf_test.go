@@ -1,7 +1,7 @@
 package kubeconfig_test
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -80,8 +80,8 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			LocationOfOrigin:         "/home/user/.kube/config",
 			Server:                   "https://example-test.com:6443",
 			InsecureSkipTLSVerify:    false,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+			CertificateAuthorityData: DummyCert.Raw,
 		}
 		k := MockConfig(0)
 		testName := "testCluster"
@@ -98,8 +98,8 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			LocationOfOrigin:         "/home/user/.kube/config",
 			Server:                   "https://example-test.com:6443",
 			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+			CertificateAuthorityData: DummyCert.Raw,
 		}
 		k := MockConfig(1)
 		testName := "test"
@@ -116,8 +116,8 @@ var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
 			LocationOfOrigin:         "/home/user/.kube/config",
 			Server:                   "https://example-test.com:6443",
 			InsecureSkipTLSVerify:    false,
-			CertificateAuthority:     "bbbbbbbbbbbb",
-			CertificateAuthorityData: []byte("bbbbbbbbbbbb"),
+			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+			CertificateAuthorityData: DummyCert.Raw,
 		}
 		k := MockConfig(1)
 		testName := "test"

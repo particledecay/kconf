@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
@@ -57,6 +57,7 @@ var _ = Describe("Pkg/Kubeconfig/SetCurrentContext", func() {
 })
 
 var _ = Describe("Pkg/Kubeconfig/Save", func() {
+
 	// restore the original config path to avoid weirdness
 	AfterEach(func() {
 		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
