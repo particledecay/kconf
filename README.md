@@ -3,7 +3,7 @@
   <p align="center">An opinionated command line tool for managing multiple kubeconfigs.</p>
   <p align="center">
     <a href="https://github.com/particledecay/kconf/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/particledecay/kconf"></a>
-    <a href="https://github.com/particledecay/kconf/actions?query=workflow%3Atests"><img alt="GitHub Workflow Status" src="https://github.com/particledecay/kconf/workflows/tests/badge.svg"></a>
+    <a href="https://github.com/particledecay/kconf/actions/workflows/coverage.yml"><img alt="Test Status" src="https://github.com/particledecay/kconf/actions/workflows/coverage.yml/badge.svg"></a>
     <a href="https://codeclimate.com/github/particledecay/kconf/maintainability"><img src="https://api.codeclimate.com/v1/badges/dd1904e8f1f515bad0b5/maintainability" /></a>
     <a href="https://codeclimate.com/github/particledecay/kconf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/dd1904e8f1f515bad0b5/test_coverage" /></a>
   </p>
