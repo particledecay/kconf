@@ -28,3 +28,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.github_token }}
           GO111MODULE: on
           GOROOT: ""
+
+      - name: Create Homebrew release
+        uses: Justintime50/homebrew-releaser@v1
+        with:
+          homebrew_owner: particledecay
+          homebrew_tap: homebrew-formulas
+          formula_folder: formula
+          github_token: ${{ secrets.github_token }}
+          commit_owner: particledecay
+          commit_email: ${{ secrets.committer_email }}
+
