@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -28,7 +29,7 @@ func completionBashCmd(command *cobra.Command) *cobra.Command {
 		Short: "Get kconf completions for bash",
 		Long:  `Generate the bash script for kconf completions`,
 		Run: func(cmd *cobra.Command, args []string) {
-			command.GenBashCompletion(os.Stdout)
+			_ = command.GenBashCompletion(os.Stdout)
 		},
 	}
 
@@ -41,7 +42,7 @@ func completionFishCmd(command *cobra.Command) *cobra.Command {
 		Short: "Get kconf completions for fish shell",
 		Long:  `Generate the fish script for kconf completions`,
 		Run: func(cmd *cobra.Command, args []string) {
-			command.GenFishCompletion(os.Stdout, true)
+			_ = command.GenFishCompletion(os.Stdout, true)
 		},
 	}
 
@@ -55,7 +56,7 @@ func completionPowerShellCmd(command *cobra.Command) *cobra.Command {
 		Long:    `Generate the fish script for kconf completions`,
 		Aliases: []string{"ps"},
 		Run: func(cmd *cobra.Command, args []string) {
-			command.GenPowerShellCompletion(os.Stdout)
+			_ = command.GenPowerShellCompletion(os.Stdout)
 		},
 	}
 
@@ -68,7 +69,7 @@ func completionZshCmd(command *cobra.Command) *cobra.Command {
 		Short: "Get kconf completions for zsh",
 		Long:  `Generate the zsh script for kconf completions`,
 		Run: func(cmd *cobra.Command, args []string) {
-			command.GenZshCompletion(os.Stdout)
+			_ = command.GenZshCompletion(os.Stdout)
 		},
 	}
 
@@ -89,7 +90,7 @@ func getContextsFromConfig(partial string) (out []string, err error) {
 }
 
 func getNamespacesFromConfig(partial string) (out []string, err error) {
-	config, err := kc.GetConfig()
+	config, _ := kc.GetConfig()
 
 	// fail if we have no current context
 	if config.CurrentContext == "" {
@@ -106,7 +107,7 @@ func getNamespacesFromConfig(partial string) (out []string, err error) {
 		return []string{""}, err
 	}
 
-	list, err := clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	list, err := clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return []string{""}, err
 	}

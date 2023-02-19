@@ -35,8 +35,11 @@ var _ = Describe("Cmd/NamespaceCmd", func() {
 
 	It("Should fail if the namespace is blank", func() {
 		k := MockConfig(2)
-		k.SetCurrentContext("test-1")
-		err := k.Save()
+		err := k.SetCurrentContext("test-1")
+		if err != nil {
+			panic(err)
+		}
+		err = k.Save()
 		if err != nil {
 			panic(err)
 		}
@@ -52,8 +55,11 @@ var _ = Describe("Cmd/NamespaceCmd", func() {
 
 	It("Should set the desired namespace", func() {
 		k := MockConfig(2)
-		k.SetCurrentContext("test-1")
-		err := k.Save()
+		err := k.SetCurrentContext("test-1")
+		if err != nil {
+			panic(err)
+		}
+		err = k.Save()
 		if err != nil {
 			panic(err)
 		}

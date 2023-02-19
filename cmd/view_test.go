@@ -38,7 +38,7 @@ var _ = Describe("Cmd/ViewCmd", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// read captured stdout
-		w.Close()
+		_ = w.Close()
 		out, _ := ioutil.ReadAll(r)
 
 		// restore stdout
