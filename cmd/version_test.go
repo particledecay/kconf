@@ -35,7 +35,7 @@ var _ = Describe("Cmd/VersionCmd", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// read captured stdout
-		w.Close()
+		_ = w.Close()
 		out, _ := ioutil.ReadAll(r)
 
 		// restore stdout

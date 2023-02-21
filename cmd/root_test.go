@@ -25,7 +25,7 @@ var _ = Describe("Cmd/Execute", func() {
 		cmd.Execute()
 
 		// read captured stdout
-		w.Close()
+		_ = w.Close()
 		out, _ := ioutil.ReadAll(r)
 
 		// restore stdout

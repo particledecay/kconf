@@ -17,7 +17,7 @@ func RenameCmd() *cobra.Command {
 		Aliases: []string{"rn"},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
-				return errors.New("You must provide the name of an existing context and a new context name")
+				return errors.New("you must provide the name of an existing context and a new context name")
 			}
 			return nil
 		},

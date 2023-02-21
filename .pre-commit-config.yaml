@@ -10,17 +10,16 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
-    - id: check-merge-conflict
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.2.0
     hooks:
       - id: detect-secrets
         exclude: go.*
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.0
+  - repo: https://github.com/TekWizely/pre-commit-golang
+    rev: v1.0.0-rc.1
     hooks:
       - id: go-fmt
-      - id: go-vet
-      - id: go-lint
+      - id: go-revive

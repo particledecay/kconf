@@ -14,7 +14,6 @@ import (
 )
 
 var _ = Describe("Cmd/AddCmd", func() {
-
 	// restore the original config path to avoid weirdness
 	AfterEach(func() {
 		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
@@ -148,7 +147,7 @@ var _ = Describe("Cmd/AddCmd", func() {
 		// Expect(err).To(HaveOccurred())
 		Expect(err).NotTo(HaveOccurred())
 
-		k3, err := kc.GetConfig()
+		k3, _ := kc.GetConfig()
 
 		Expect(k3).To(ContainContext("test-1-1"))
 	})
@@ -167,7 +166,7 @@ var _ = Describe("Cmd/AddCmd", func() {
 		if err != nil {
 			panic(err)
 		}
-		tmpfile.Write([]byte("ajsdlkfjasldfkjlasdkf"))
+		_, _ = tmpfile.Write([]byte("ajsdlkfjasldfkjlasdkf"))
 		kc.MainConfigPath = tmpfile.Name()
 
 		// add the kubeconfig

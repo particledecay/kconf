@@ -15,7 +15,7 @@ func VersionCmd() *cobra.Command {
 		Aliases: []string{"ver"},
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if verbose == true {
+			if verbose {
 				if err := build.PrintLongVersion(); err != nil {
 					return err
 				}

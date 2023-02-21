@@ -54,7 +54,7 @@ var _ = Describe("Cmd/ListCmd", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// read captured stdout
-		w.Close()
+		_ = w.Close()
 		out, _ := ioutil.ReadAll(r)
 
 		// restore stdout
@@ -73,8 +73,11 @@ var _ = Describe("Cmd/ListCmd", func() {
 	It("Should mark the current context if set", func() {
 		// write a kubeconfig that we'll import later
 		k := MockConfig(5)
-		k.SetCurrentContext("test-1")
-		err := k.Save()
+		err := k.SetCurrentContext("test-1")
+		if err != nil {
+			panic(err)
+		}
+		err = k.Save()
 		if err != nil {
 			panic(err)
 		}
@@ -100,7 +103,7 @@ var _ = Describe("Cmd/ListCmd", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// read captured stdout
-		w.Close()
+		_ = w.Close()
 		out, _ := ioutil.ReadAll(r)
 
 		// restore stdout

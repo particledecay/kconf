@@ -38,7 +38,7 @@ func ViewCmd() *cobra.Command {
 			}
 
 			// print config content
-			os.Stdout.Write(content)
+			_, _ = os.Stdout.Write(content)
 
 			return nil
 		},
