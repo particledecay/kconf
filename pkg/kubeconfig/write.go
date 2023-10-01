@@ -53,10 +53,16 @@ func (k *KConf) Merge(config *clientcmdapi.Config, name string) {
 		if renamed, ok := renamedUsers[ctx.AuthInfo]; ok {
 			ctx.AuthInfo = renamed
 		}
-		if name == "" {
-			name = ctxName
+		// the context name is chosen based on the following priority:
+		// 1. provided via --context-name
+		// 2. specified in the provided config file
+		// 3. generated from the cluster and user name (<cluster>-<user>)
+		if name != "" {
+			ctxName = name
+		} else if ctxName == "" && name == "" {
+			ctxName = fmt.Sprintf("%s-%s", ctx.Cluster, ctx.AuthInfo)
 		}
-		added := k.AddContext(name, ctx)
+		added := k.AddContext(ctxName, ctx)
 		if added != "" { // this context was newly added
 			if added != ctxName {
 				Out.Log().Msgf("renamed context '%s' to '%s'", ctxName, added)

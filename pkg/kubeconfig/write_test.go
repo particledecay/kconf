@@ -121,6 +121,22 @@ var _ = Describe("Pkg/Kubeconfig/Merge", func() {
 		Expect(k).To(ContainContext("test-1"))
 	})
 
+	It("Should merge in multiple non-conflicting contexts without forcing renames", func() {
+		k := MockConfig(1)
+		k2 := MockConfig(3)
+
+		// we need k and k2 to be two unique configs, so delete the first config in k2
+		err := k2.Remove("test")
+
+		Expect(err).NotTo(HaveOccurred())
+
+		k.Merge(&k2.Config, "")
+
+		Expect(k).To(ContainContext("test"))
+		Expect(k).To(ContainContext("test-1"))
+		Expect(k).To(ContainContext("test-2"))
+	})
+
 	It("Should rename a cluster when one exists with the same name", func() {
 		k := MockConfig(1)
 		k2 := MockConfig(2)
