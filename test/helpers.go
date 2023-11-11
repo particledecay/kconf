@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"math/rand"
 	"os"
+	"path"
+	"testing"
 	"time"
 
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -94,4 +96,78 @@ func CleanupFiles() {
 			kc.Out.Log().Err(err).Msgf("could not remove '%s'", filepath)
 		}
 	}
+}
+
+func PostTestCleanup() {
+	// reset the kubeconfig
+	kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
+	CleanupFiles()
+}
+
+func AssertContext(t *testing.T, k *kc.KConf, contextName string) {
+	contexts, _ := k.List()
+	for _, ctx := range contexts {
+		if ctx == contextName {
+			return
+		}
+	}
+	t.Errorf("expected context '%s' in '%v'", contextName, contexts)
+}
+
+func AssertCluster(t *testing.T, k *kc.KConf, clusterName string) {
+	var clusterNames = []string{}
+	for cluster := range k.Clusters {
+		if cluster == clusterName {
+			return
+		}
+		clusterNames = append(clusterNames, cluster)
+	}
+	t.Errorf("expected cluster '%s' in '%v'", clusterName, clusterNames)
+}
+
+func AssertUser(t *testing.T, k *kc.KConf, userName string) {
+	var userNames = []string{}
+	for user := range k.AuthInfos {
+		if user == userName {
+			return
+		}
+		userNames = append(userNames, user)
+	}
+	t.Errorf("expected user '%s' in '%v'", userName, userNames)
+}
+
+func GenerateAndReplaceGlobalKubeconfig(t *testing.T, newContexts, baseContexts int) string {
+	// save brand new kubeconfig and replace the global one
+	k := MockConfig(newContexts)
+	err := k.Save()
+	if err != nil {
+		t.Fatal(err)
+	}
+	newConfig := kc.MainConfigPath
+
+	// replace the global kubeconfig
+	if baseContexts == 0 {
+		tmpfile, err := MakeTmpFile()
+		if err != nil {
+			t.Fatal(err)
+		}
+		kc.MainConfigPath = tmpfile.Name()
+	} else {
+		k2 := MockConfig(baseContexts)
+		err := k2.Save()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	return newConfig
+}
+
+func GetGlobalKubeconfig(t *testing.T) *kc.KConf {
+	k, err := kc.GetConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return k
 }

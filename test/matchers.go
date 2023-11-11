@@ -10,6 +10,17 @@ import (
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 )
 
+// ContainsContext checks through a kubeconfig's contexts for a value
+func ContainsContext(config *kc.KConf, contextName string) bool {
+	contexts, _ := config.List()
+	for _, ctx := range contexts {
+		if ctx == contextName {
+			return true
+		}
+	}
+	return false
+}
+
 // ContainContextMatcher gets returned by the matcher function
 type ContainContextMatcher struct {
 	Element interface{}
