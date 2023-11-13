@@ -48,7 +48,9 @@ func (k *KConf) AddContext(name string, context *clientcmdapi.Context) string {
 func (k *KConf) hasContext(context *clientcmdapi.Context) bool {
 	var foundContext bool
 	for _, ctx := range k.Contexts {
-		if reflect.DeepEqual(ctx, context) == true {
+		if ctx.Cluster == context.Cluster &&
+			ctx.AuthInfo == context.AuthInfo &&
+			reflect.DeepEqual(ctx.Extensions, context.Extensions) {
 			foundContext = true
 			break
 		}
@@ -71,7 +73,11 @@ func (k *KConf) AddCluster(name string, cluster *clientcmdapi.Cluster) string {
 func (k *KConf) hasCluster(cluster *clientcmdapi.Cluster) bool {
 	var foundCluster bool
 	for _, cls := range k.Clusters {
-		if reflect.DeepEqual(cls, cluster) == true {
+		if cls.CertificateAuthority == cluster.CertificateAuthority &&
+			string(cls.CertificateAuthorityData) == string(cluster.CertificateAuthorityData) &&
+			cls.Server == cluster.Server &&
+			cls.InsecureSkipTLSVerify == cluster.InsecureSkipTLSVerify &&
+			reflect.DeepEqual(cls.Extensions, cluster.Extensions) {
 			foundCluster = true
 			break
 		}
@@ -94,7 +100,19 @@ func (k *KConf) AddUser(name string, user *clientcmdapi.AuthInfo) string {
 func (k *KConf) hasUser(user *clientcmdapi.AuthInfo) bool {
 	var foundUser bool
 	for _, u := range k.AuthInfos {
-		if reflect.DeepEqual(u, user) == true {
+		if u.ClientCertificate == user.ClientCertificate &&
+			string(u.ClientCertificateData) == string(user.ClientCertificateData) &&
+			u.ClientKey == user.ClientKey &&
+			string(u.ClientKeyData) == string(user.ClientKeyData) &&
+			u.Token == user.Token &&
+			u.TokenFile == user.TokenFile &&
+			u.Impersonate == user.Impersonate &&
+			u.ImpersonateUID == user.ImpersonateUID &&
+			reflect.DeepEqual(u.ImpersonateGroups, user.ImpersonateGroups) &&
+			u.Username == user.Username &&
+			u.Password == user.Password &&
+			reflect.DeepEqual(u.AuthProvider, user.AuthProvider) &&
+			reflect.DeepEqual(u.Exec, user.Exec) {
 			foundUser = true
 			break
 		}

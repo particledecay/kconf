@@ -1,30 +1,48 @@
 package kubeconfig_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
+
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
-var _ = Describe("Pkg/Kubeconfig/GetRestConfig", func() {
-	It("Should fail if no current context is set", func() {
-		k := MockConfig(1)
-		k.CurrentContext = ""
+func TestRestConfig(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"fail if current context not set": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			k.CurrentContext = ""
 
-		config, err := kc.GetRestConfig(k)
+			config, err := kc.GetRestConfig(k)
+			if err == nil {
+				t.Error("expected error to occur")
+			}
 
-		Expect(err).To(HaveOccurred())
-		Expect(config).To(BeNil())
-	})
+			if config != nil {
+				t.Errorf("expected: nil, got: %v", config)
+			}
+		},
+		"fail with an unusable kubeconfig": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			k.CurrentContext = "test"
 
-	It("Should fail with an unusable kubeconfig", func() {
-		k := MockConfig(1)
-		k.SetCurrentContext("test")
+			config, err := kc.GetRestConfig(k)
+			if err == nil {
+				t.Error("expected error to occur")
+			}
 
-		config, err := kc.GetRestConfig(k)
+			if config != nil {
+				t.Errorf("expected: nil, got: %v", config)
+			}
+		},
+	}
 
-		Expect(err).To(HaveOccurred())
-		Expect(config).To(BeNil())
-	})
-})
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
