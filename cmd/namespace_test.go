@@ -1,75 +1,88 @@
 package cmd_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
+
 	"github.com/particledecay/kconf/cmd"
+	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Cmd/NamespaceCmd", func() {
-	It("Should fail if a namespace is not provided", func() {
-		namespaceCmd := cmd.NamespaceCmd()
-		namespaceCmd.SilenceErrors = true
-		namespaceCmd.SilenceUsage = true
-		err := namespaceCmd.Execute()
+func TestNamespaceCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"fail if namespace not provided": func(t *testing.T) {
+			namespaceCmd := cmd.NamespaceCmd()
+			namespaceCmd.SilenceErrors = true
+			namespaceCmd.SilenceUsage = true
 
-		Expect(err).To(HaveOccurred())
-	})
+			err := namespaceCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
+		},
+		"fail if current context not set": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-	It("Should fail if a current context has not been set", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			namespaceCmd := cmd.NamespaceCmd()
+			namespaceCmd.SilenceErrors = true
+			namespaceCmd.SilenceUsage = true
+			namespaceCmd.SetArgs([]string{"default"})
 
-		namespaceCmd := cmd.NamespaceCmd()
-		namespaceCmd.SilenceErrors = true
-		namespaceCmd.SilenceUsage = true
-		namespaceCmd.SetArgs([]string{"default"})
-		err = namespaceCmd.Execute()
+			err := namespaceCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
+		},
+		"fail if namespace is blank": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 2)
 
-		Expect(err).To(HaveOccurred())
-	})
+			k, _ := kc.GetConfig()
+			err := k.SetCurrentContext("test-1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	It("Should fail if the namespace is blank", func() {
-		k := MockConfig(2)
-		err := k.SetCurrentContext("test-1")
-		if err != nil {
-			panic(err)
-		}
-		err = k.Save()
-		if err != nil {
-			panic(err)
-		}
+			namespaceCmd := cmd.NamespaceCmd()
+			namespaceCmd.SilenceErrors = true
+			namespaceCmd.SilenceUsage = true
+			namespaceCmd.SetArgs([]string{""})
 
-		namespaceCmd := cmd.NamespaceCmd()
-		namespaceCmd.SilenceErrors = true
-		namespaceCmd.SilenceUsage = true
-		namespaceCmd.SetArgs([]string{""})
-		err = namespaceCmd.Execute()
+			err = namespaceCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
+		},
+		"set desired namespace": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 2)
 
-		Expect(err).To(HaveOccurred())
-	})
+			k, _ := kc.GetConfig()
+			err := k.SetCurrentContext("test-1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	It("Should set the desired namespace", func() {
-		k := MockConfig(2)
-		err := k.SetCurrentContext("test-1")
-		if err != nil {
-			panic(err)
-		}
-		err = k.Save()
-		if err != nil {
-			panic(err)
-		}
+			namespaceCmd := cmd.NamespaceCmd()
+			namespaceCmd.SilenceErrors = true
+			namespaceCmd.SilenceUsage = true
+			namespaceCmd.SetArgs([]string{"kube-system"})
 
-		namespaceCmd := cmd.NamespaceCmd()
-		namespaceCmd.SilenceErrors = true
-		namespaceCmd.SilenceUsage = true
-		namespaceCmd.SetArgs([]string{"kube-system"})
-		err = namespaceCmd.Execute()
+			err = namespaceCmd.Execute()
+			if err != nil {
+				t.Error("error should not have occurred")
+			}
+		},
+	}
 
-		Expect(err).NotTo(HaveOccurred())
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

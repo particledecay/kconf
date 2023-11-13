@@ -7,6 +7,7 @@ import (
 	"github.com/particledecay/kconf/cmd"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
 func TestAddCmd(t *testing.T) {
@@ -112,6 +113,7 @@ func TestAddCmd(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
 		t.Run(name, test)
 		PostTestCleanup()
 	}

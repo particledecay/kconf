@@ -96,6 +96,7 @@ func CleanupFiles() {
 			kc.Out.Log().Err(err).Msgf("could not remove '%s'", filepath)
 		}
 	}
+	tmpfiles = []string{}
 }
 
 func PostTestCleanup() {
