@@ -31,12 +31,7 @@ func TestRemoveCmd(t *testing.T) {
 				t.Error(err)
 			}
 
-			contexts, _ := k.List()
-			for _, ctx := range contexts {
-				if ctx == ctxName {
-					t.Errorf("expected context '%s' not to be in '%v'", ctxName, contexts)
-				}
-			}
+			AssertNotContext(t, k, ctxName)
 		},
 		"fail when context doesn't exist": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)

@@ -1,87 +1,90 @@
 package cmd_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	"github.com/particledecay/kconf/cmd"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Cmd/RenameCmd", func() {
+func TestRenameCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"rename an existing context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-	It("Should rename an existing context", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			// rename "test" -> "some-other-thing"
+			oldName := "test"
+			newName := "some-other-thing"
+			renameCmd := cmd.RenameCmd()
+			renameCmd.SilenceErrors = true
+			renameCmd.SetArgs([]string{oldName, newName})
 
-		// rename "test" -> "some-other-thing"
-		oldName := "test"
-		newName := "some-other-thing"
-		renameCmd := cmd.RenameCmd()
-		renameCmd.SilenceErrors = true
-		renameCmd.SetArgs([]string{oldName, newName})
-		err = renameCmd.Execute()
+			err := renameCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
+			// should read new kubeconfig with new values
+			k, err := kc.GetConfig()
+			if err != nil {
+				t.Error(err)
+			}
 
-		// should read new kubeconfig with new values
-		k, err = kc.GetConfig()
+			AssertNotContext(t, k, oldName)
+			AssertContext(t, k, newName)
+		},
+		"fail when context doesn't exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext(oldName))
-		Expect(k).To(ContainContext(newName))
-	})
+			// rename "test-jlaskdjf" -> "some-other-thing"
+			oldName := "test-jlaskdjf"
+			newName := "some-other-thing"
+			renameCmd := cmd.RenameCmd()
+			renameCmd.SilenceErrors = true
+			renameCmd.SetArgs([]string{oldName, newName})
 
-	It("Should fail when context doesn't exist", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			err := renameCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
 
-		// rename "test-jlaskdjf" -> "some-other-thing"
-		oldName := "test-jlaskdjf"
-		newName := "some-other-thing"
-		renameCmd := cmd.RenameCmd()
-		renameCmd.SilenceErrors = true
-		renameCmd.SetArgs([]string{oldName, newName})
-		err = renameCmd.Execute()
+			// should have not modified kubeconfig
+			k, err := kc.GetConfig()
+			if err != nil {
+				t.Error(err)
+			}
 
-		Expect(err).To(HaveOccurred())
+			AssertNotContext(t, k, newName)
+		},
+		"fail if insufficient arguments are provided": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-		// should read new kubeconfig with new values
-		k, err = kc.GetConfig()
+			// rename "test-jlaskdjf" -> "some-other-thing"
+			oldName := "test-jlaskdjf"
+			newName := "some-other-thing"
+			renameCmd := cmd.RenameCmd()
+			renameCmd.SilenceErrors = true
+			renameCmd.SilenceUsage = true
+			renameCmd.SetArgs([]string{oldName})
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext(newName))
-	})
+			err := renameCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
 
-	It("Should fail if at least two arguments are provided", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			// should have not modified kubeconfig
+			k, err := kc.GetConfig()
+			if err != nil {
+				t.Error(err)
+			}
 
-		// rename "test-jlaskdjf" -> "some-other-thing"
-		oldName := "test-jlaskdjf"
-		newName := "some-other-thing"
-		renameCmd := cmd.RenameCmd()
-		renameCmd.SilenceErrors = true
-		renameCmd.SilenceUsage = true
-		renameCmd.SetArgs([]string{oldName})
-		err = renameCmd.Execute()
+			AssertNotContext(t, k, newName)
+		},
+	}
 
-		Expect(err).To(HaveOccurred())
-
-		// should read new kubeconfig with new values
-		k, err = kc.GetConfig()
-
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext(newName))
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

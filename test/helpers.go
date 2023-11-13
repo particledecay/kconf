@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"regexp"
 	"testing"
 	"time"
 
@@ -115,6 +116,16 @@ func AssertContext(t *testing.T, k *kc.KConf, contextName string) {
 	t.Errorf("expected context '%s' in '%v'", contextName, contexts)
 }
 
+func AssertNotContext(t *testing.T, k *kc.KConf, contextName string) {
+	contexts, _ := k.List()
+	for _, ctx := range contexts {
+		if ctx == contextName {
+			t.Errorf("expected context '%s' to not be in '%v'", contextName, contexts)
+			return
+		}
+	}
+}
+
 func AssertCluster(t *testing.T, k *kc.KConf, clusterName string) {
 	var clusterNames = []string{}
 	for cluster := range k.Clusters {
@@ -126,6 +137,17 @@ func AssertCluster(t *testing.T, k *kc.KConf, clusterName string) {
 	t.Errorf("expected cluster '%s' in '%v'", clusterName, clusterNames)
 }
 
+func AssertNotCluster(t *testing.T, k *kc.KConf, clusterName string) {
+	var clusterNames = []string{}
+	for cluster := range k.Clusters {
+		if cluster == clusterName {
+			t.Errorf("expected cluster '%s' to not be in '%v'", clusterName, clusterNames)
+			return
+		}
+		clusterNames = append(clusterNames, cluster)
+	}
+}
+
 func AssertUser(t *testing.T, k *kc.KConf, userName string) {
 	var userNames = []string{}
 	for user := range k.AuthInfos {
@@ -135,6 +157,33 @@ func AssertUser(t *testing.T, k *kc.KConf, userName string) {
 		userNames = append(userNames, user)
 	}
 	t.Errorf("expected user '%s' in '%v'", userName, userNames)
+}
+
+func AssertNotUser(t *testing.T, k *kc.KConf, userName string) {
+	var userNames = []string{}
+	for user := range k.AuthInfos {
+		if user == userName {
+			t.Errorf("expected user '%s' to not be in '%v'", userName, userNames)
+			return
+		}
+		userNames = append(userNames, user)
+	}
+}
+
+func AssertSubstrings(t *testing.T, s []byte, subs []string) {
+	for _, sub := range subs {
+		if ok, _ := regexp.Match(fmt.Sprintf(`\b%s\b`, sub), s); !ok {
+			t.Errorf("expected '%s' in '%s'", sub, s)
+		}
+	}
+}
+
+func AssertNotSubstrings(t *testing.T, s []byte, subs []string) {
+	for _, sub := range subs {
+		if ok, _ := regexp.Match(fmt.Sprintf(`\b%s\b`, sub), s); ok {
+			t.Errorf("expected '%s' to not be in '%s'", sub, s)
+		}
+	}
 }
 
 func GenerateAndReplaceGlobalKubeconfig(t *testing.T, newContexts, baseContexts int) string {

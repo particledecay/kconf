@@ -2,9 +2,7 @@ package cmd_test
 
 import (
 	"bytes"
-	"fmt"
 	"io"
-	"regexp"
 	"testing"
 
 	"github.com/particledecay/kconf/cmd"
@@ -42,11 +40,7 @@ func TestListCmd(t *testing.T) {
 
 			// check that the output contains the contexts we expect
 			var expectedContexts = []string{"test", "test-1", "test-2", "test-3", "test-4"}
-			for _, context := range expectedContexts {
-				if ok, _ := regexp.Match(fmt.Sprintf(`\b%s\b`, context), out); !ok {
-					t.Errorf("expected context '%s' in output '%s'", context, out)
-				}
-			}
+			AssertSubstrings(t, out, expectedContexts)
 		},
 		"mark current context if set": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 5)
@@ -84,9 +78,7 @@ func TestListCmd(t *testing.T) {
 			out, _ := io.ReadAll(logBuffer)
 
 			// check that test-1 is marked with an asterisk
-			if ok, _ := regexp.Match(`\* test-1`, out); !ok {
-				t.Errorf("expected context 'test-1' to be marked, got '%s'", out)
-			}
+			AssertSubstrings(t, out, []string{"* test-1"})
 		},
 	}
 

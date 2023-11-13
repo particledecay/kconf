@@ -1,50 +1,58 @@
 package cmd_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
+	"regexp"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/build"
 	"github.com/particledecay/kconf/cmd"
 )
 
-var _ = Describe("Cmd/VersionCmd", func() {
-	It("Should display short version information", func() {
-		// FIXME: Ginkgo supplies its own CLI flags which screws up stdout redirection
-		// see https://github.com/onsi/ginkgo/issues/285#issuecomment-290575636
-		// here we are truncating all args that aren't the command itself
-		origArgs := os.Args[:]
-		os.Args = os.Args[:1]
+func TestVersionCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"display version information": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-		// redirect stdout
-		r, w, _ := os.Pipe()
-		oldOut := os.Stdout
-		os.Stdout = w
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		// set a fake version
-		build.Version = "1.2.3"
-		build.Commit = "asdfasdfasdf"
-		build.Date = "2020-01-01"
+				// read from r
+				out, _ := io.ReadAll(r)
 
-		versionCmd := cmd.VersionCmd()
-		versionCmd.SilenceErrors = true
-		err := versionCmd.Execute()
+				want := "1.2.3"
+				if ok, _ := regexp.Match(want, out); !ok {
+					t.Errorf("expected '%s' in output '%s'", want, out)
+				}
 
-		Expect(err).NotTo(HaveOccurred())
+				// this shouldn't be in short version output
+				dont_want := "asdfasdfasdf"
+				if ok, _ := regexp.Match(dont_want, out); ok {
+					t.Errorf("expected '%s' to not be in output '%s'", dont_want, out)
+				}
+			}()
 
-		// read captured stdout
-		_ = w.Close()
-		out, _ := ioutil.ReadAll(r)
+			// set a fake version
+			build.Version = "1.2.3"
+			build.Commit = "asdfasdfasdf"
+			build.Date = "2020-01-01"
 
-		// restore stdout
-		os.Stdout = oldOut
+			versionCmd := cmd.VersionCmd()
+			versionCmd.SilenceErrors = true
 
-		// restore args back to what they were
-		os.Args = origArgs[:]
+			err := versionCmd.Execute()
+			if err != nil {
+				t.Fatal(err)
+			}
+		},
+	}
 
-		Expect(out).To(ContainSubstring("1.2.3"))
-		Expect(out).NotTo(ContainSubstring("asdfasdfasdf")) // short version doesn't contain this
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+	}
+}
