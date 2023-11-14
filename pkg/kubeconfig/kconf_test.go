@@ -3,8 +3,6 @@ package kubeconfig_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -117,6 +115,7 @@ func TestAddCluster(t *testing.T) {
 				InsecureSkipTLSVerify:    false,
 				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
 				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]apiruntime.Object{},
 			}
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
 			k, _ := kc.GetConfig()

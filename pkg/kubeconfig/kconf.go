@@ -44,18 +44,24 @@ func (k *KConf) AddContext(name string, context *clientcmdapi.Context) string {
 	return name
 }
 
+// IsEqualContext checks whether two Contexts are equal
+func IsEqualContext(ctx1, ctx2 *clientcmdapi.Context) bool {
+	if ctx1.Cluster != ctx2.Cluster ||
+		ctx1.AuthInfo != ctx2.AuthInfo ||
+		!reflect.DeepEqual(ctx1.Extensions, ctx2.Extensions) {
+		return false
+	}
+	return true
+}
+
 // hasContext checks whether the KConf already contains the given Context
 func (k *KConf) hasContext(context *clientcmdapi.Context) bool {
-	var foundContext bool
 	for _, ctx := range k.Contexts {
-		if ctx.Cluster == context.Cluster &&
-			ctx.AuthInfo == context.AuthInfo &&
-			reflect.DeepEqual(ctx.Extensions, context.Extensions) {
-			foundContext = true
-			break
+		if IsEqualContext(ctx, context) {
+			return true
 		}
 	}
-	return foundContext
+	return false
 }
 
 // AddCluster attempts to add a Cluster and return the resulting name
@@ -69,20 +75,26 @@ func (k *KConf) AddCluster(name string, cluster *clientcmdapi.Cluster) string {
 	return name
 }
 
+// IsEqualCluster checks whether two Clusters are equal
+func IsEqualCluster(cls1, cls2 *clientcmdapi.Cluster) bool {
+	if cls1.CertificateAuthority != cls2.CertificateAuthority ||
+		string(cls1.CertificateAuthorityData) != string(cls2.CertificateAuthorityData) ||
+		cls1.Server != cls2.Server ||
+		cls1.InsecureSkipTLSVerify != cls2.InsecureSkipTLSVerify ||
+		!reflect.DeepEqual(cls1.Extensions, cls2.Extensions) {
+		return false
+	}
+	return true
+}
+
 // hasCluster checks whether the KConf already contains the given Cluster
 func (k *KConf) hasCluster(cluster *clientcmdapi.Cluster) bool {
-	var foundCluster bool
 	for _, cls := range k.Clusters {
-		if cls.CertificateAuthority == cluster.CertificateAuthority &&
-			string(cls.CertificateAuthorityData) == string(cluster.CertificateAuthorityData) &&
-			cls.Server == cluster.Server &&
-			cls.InsecureSkipTLSVerify == cluster.InsecureSkipTLSVerify &&
-			reflect.DeepEqual(cls.Extensions, cluster.Extensions) {
-			foundCluster = true
-			break
+		if IsEqualCluster(cls, cluster) {
+			return true
 		}
 	}
-	return foundCluster
+	return false
 }
 
 // AddUser attempts to add an AuthInfo and return the resulting name
@@ -96,28 +108,34 @@ func (k *KConf) AddUser(name string, user *clientcmdapi.AuthInfo) string {
 	return name
 }
 
+// IsEqualUser checks whether two Users are equal
+func IsEqualUser(user1, user2 *clientcmdapi.AuthInfo) bool {
+	if user1.ClientCertificate != user2.ClientCertificate ||
+		string(user1.ClientCertificateData) != string(user2.ClientCertificateData) ||
+		user1.ClientKey != user2.ClientKey ||
+		string(user1.ClientKeyData) != string(user2.ClientKeyData) ||
+		user1.Token != user2.Token ||
+		user1.TokenFile != user2.TokenFile ||
+		user1.Impersonate != user2.Impersonate ||
+		user1.ImpersonateUID != user2.ImpersonateUID ||
+		!reflect.DeepEqual(user1.ImpersonateGroups, user2.ImpersonateGroups) ||
+		user1.Username != user2.Username ||
+		user1.Password != user2.Password ||
+		!reflect.DeepEqual(user1.AuthProvider, user2.AuthProvider) ||
+		!reflect.DeepEqual(user1.Exec, user2.Exec) {
+		return false
+	}
+	return true
+}
+
 // hasUser checks whether the KConf already contains the given AuthInfo
 func (k *KConf) hasUser(user *clientcmdapi.AuthInfo) bool {
-	var foundUser bool
 	for _, u := range k.AuthInfos {
-		if u.ClientCertificate == user.ClientCertificate &&
-			string(u.ClientCertificateData) == string(user.ClientCertificateData) &&
-			u.ClientKey == user.ClientKey &&
-			string(u.ClientKeyData) == string(user.ClientKeyData) &&
-			u.Token == user.Token &&
-			u.TokenFile == user.TokenFile &&
-			u.Impersonate == user.Impersonate &&
-			u.ImpersonateUID == user.ImpersonateUID &&
-			reflect.DeepEqual(u.ImpersonateGroups, user.ImpersonateGroups) &&
-			u.Username == user.Username &&
-			u.Password == user.Password &&
-			reflect.DeepEqual(u.AuthProvider, user.AuthProvider) &&
-			reflect.DeepEqual(u.Exec, user.Exec) {
-			foundUser = true
-			break
+		if IsEqualUser(u, user) {
+			return true
 		}
 	}
-	return foundUser
+	return false
 }
 
 func (k *KConf) rename(name string, objType string) (string, error) {
