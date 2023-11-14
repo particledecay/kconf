@@ -9,6 +9,7 @@ import (
 
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
 func TestSetNamespace(t *testing.T) {
@@ -121,6 +122,7 @@ func TestSave(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
 		t.Run(name, test)
 		PostTestCleanup()
 	}
