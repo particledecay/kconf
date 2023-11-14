@@ -1,172 +1,238 @@
 package kubeconfig_test
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
+	"fmt"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	runtimeapi "k8s.io/apimachinery/pkg/runtime"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Pkg/Kubeconfig/SetNamespace", func() {
-	It("Should set the namespace in the given context", func() {
-		k := MockConfig(1)
-		testCtx := "test"
-		testNamespace := "superman"
+func TestSetNamespace(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"set namespace in the given context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
 
-		err := k.SetNamespace(testCtx, testNamespace)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(k.Config.Contexts[testCtx].Namespace).To(Equal(testNamespace))
-	})
+			testCtx := "test"
+			testNamespace := "superman"
 
-	It("Should fail if the context does not exist", func() {
-		k := MockConfig(0)
-		testCtx := "test-1"
-		testNamespace := "superman"
+			err := k.SetNamespace(testCtx, testNamespace)
+			if err != nil {
+				t.Errorf(fmt.Sprintf("expected: nil, got: %v", err))
+			}
+			if k.Config.Contexts[testCtx].Namespace != testNamespace {
+				t.Errorf(fmt.Sprintf("expected: %s, got: %s", testNamespace, k.Config.Contexts[testCtx].Namespace))
+			}
+		},
+		"fail if context does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k := GetGlobalKubeconfig(t)
 
-		// cannot set namespace on a non-existent context
-		err := k.SetNamespace(testCtx, testNamespace)
-		Expect(err).Should(HaveOccurred())
+			testCtx := "test-1"
+			testNamespace := "superman"
 
-		// also make sure the context doesn't actually exist
-		Expect(k).NotTo(ContainContext(testCtx))
-	})
-})
+			// cannot set namespace on a non-existent context
+			err := k.SetNamespace(testCtx, testNamespace)
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
 
-var _ = Describe("Pkg/Kubeconfig/SetCurrentContext", func() {
-	It("Should set the current context if the context exists", func() {
-		k := MockConfig(5)
-		contextName := "test-2"
+			// also make sure the context doesn't actually exist
+			if _, ok := k.Config.Contexts[testCtx]; ok {
+				t.Errorf("expected: nil, got: %v", k.Config.Contexts[testCtx])
+			}
+		},
+	}
 
-		err := k.SetCurrentContext(contextName)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(k.CurrentContext).To(Equal(contextName))
-	})
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-	It("Should fail if the context does not exist", func() {
-		k := MockConfig(0)
-		testCtx := "test-1"
+func TestSetCurrentContext(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"set current context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
+			k := GetGlobalKubeconfig(t)
 
-		err := k.SetCurrentContext(testCtx)
-		Expect(err).Should(HaveOccurred())
-	})
-})
+			testCtx := "test-2"
 
-var _ = Describe("Pkg/Kubeconfig/Save", func() {
+			err := k.SetCurrentContext(testCtx)
+			if err != nil {
+				t.Errorf(fmt.Sprintf("expected: nil, got: %v", err))
+			}
 
-	// restore the original config path to avoid weirdness
-	AfterEach(func() {
-		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
-	})
+			if k.CurrentContext != testCtx {
+				t.Errorf(fmt.Sprintf("expected: %s, got: %s", testCtx, k.CurrentContext))
+			}
+		},
+		"fail if context does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k := GetGlobalKubeconfig(t)
 
-	It("Should save a valid kubeconfig", func() {
-		k := MockConfig(1)
+			testCtx := "test-1"
 
-		// create temp location for config
-		tmpfile, err := ioutil.TempFile("", "config")
-		if err != nil {
-			panic(err)
-		}
-		kc.MainConfigPath = tmpfile.Name()
+			err := k.SetCurrentContext(testCtx)
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+		},
+	}
 
-		// save kubeconfig to the temp location
-		err = k.Save()
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(err).NotTo(HaveOccurred())
+func TestSave(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"save valid kubeconfig": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
 
-		// read saved kubeconfig
-		k2, err := kc.GetConfig()
+			err := k.Save()
+			if err != nil {
+				t.Errorf(fmt.Sprintf("expected: nil, got: %v", err))
+			}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext("test"))
-	})
+			// read saved kubeconfig
+			k2 := GetGlobalKubeconfig(t)
 
-	It("Should fail if we can't write to the kubeconfig file", func() {
-		// this should not be writeable
-		k := MockConfig(1)
-		kc.MainConfigPath = "/sbin/kconf.config"
-		err := k.Save()
+			AssertContext(t, k2, "test")
+		},
+		"fail if kubeconfig is unwriteable": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).To(HaveOccurred())
-	})
-})
+			// this path should not be writeable
+			kc.MainConfigPath = "/sbin/kconf.config"
 
-var _ = Describe("Pkg/Kubeconfig/Merge", func() {
-	It("Should merge a kubeconfig into an existing kubeconfig", func() {
-		k := MockConfig(2)
-		k2 := MockConfig(1)
+			err := k.Save()
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+		},
+	}
 
-		k.Merge(&k2.Config, "booyah")
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(k).To(ContainContext("test"))
-		Expect(k).To(ContainContext("test-1"))
-	})
+func TestMerge(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"merge kubeconfig into existing kubeconfig": func(t *testing.T) {
+			contextName := "booyah"
+			config := clientcmdapi.NewConfig()
+			config.Clusters[contextName] = &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   fmt.Sprintf("https://example-%s.com:6443", contextName),
+				InsecureSkipTLSVerify:    true,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]runtimeapi.Object{},
+			}
+			config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", contextName),
+			}
+			config.Contexts[contextName] = &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          contextName,
+				AuthInfo:         contextName,
+				Namespace:        "default",
+				Extensions:       map[string]runtimeapi.Object{},
+			}
 
-	It("Should rename a context when one exists with the same name", func() {
-		k := MockConfig(1)
-		k2 := MockConfig(2)
+			k := MockConfig(2)
 
-		// we need k and k2 to be two unique configs, so delete the first config in k2
-		err := k2.Remove("test")
+			k.Merge(config, "booyah")
 
-		Expect(err).NotTo(HaveOccurred())
+			AssertContext(t, k, "test")
+			AssertContext(t, k, "test-1")
+			AssertContext(t, k, "booyah") // merged context
+		},
+		"rename context if it already exists": func(t *testing.T) {
+			k := MockConfig(1)
+			k2 := MockConfig(2)
 
-		k.Merge(&k2.Config, "")
+			// we need k and k2 to be two unique configs, so delete the first config in k2
+			err := k2.Remove("test")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		Expect(k).To(ContainContext("test"))
-		Expect(k).To(ContainContext("test-1"))
-	})
+			// force context names to be the same but with different configs
+			k2.Contexts["test"] = k2.Contexts["test-1"]
+			delete(k2.Contexts, "test-1")
 
-	It("Should rename a cluster when one exists with the same name", func() {
-		k := MockConfig(1)
-		k2 := MockConfig(2)
+			k.Merge(&k2.Config, "")
 
-		// we need k and k2 to be two unique configs, so delete the first config in k2
-		err := k2.Remove("test")
+			AssertContext(t, k, "test")
+			AssertContext(t, k, "test-1") // renamed context
+		},
+		"rename cluster if it already exists": func(t *testing.T) {
+			k := MockConfig(1)
+			k2 := MockConfig(2)
 
-		Expect(err).NotTo(HaveOccurred())
+			// we need k and k2 to be two unique configs, so delete the first config in k2
+			err := k2.Remove("test")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		k2.Clusters["test"] = k2.Clusters["test-1"]
-		delete(k2.Clusters, "test-1")
-		k.Merge(&k2.Config, "")
+			// force cluster names to be the same but with different configs
+			k2.Clusters["test"] = k2.Clusters["test-1"]
+			delete(k2.Clusters, "test-1")
 
-		Expect(k).To(ContainContext("test"))
-		Expect(k).To(ContainContext("test-1"))
-		Expect(k.Clusters).To(HaveKey("test"))
-		Expect(k.Clusters).To(HaveKey("test-1"))
-	})
+			k.Merge(&k2.Config, "")
 
-	It("Should rename a user when one exists with the same name", func() {
-		k := MockConfig(1)
-		k2 := MockConfig(2)
+			AssertCluster(t, k, "test")
+			AssertCluster(t, k, "test-1") // renamed cluster
+		},
+		"rename user if it already exists": func(t *testing.T) {
+			k := MockConfig(1)
+			k2 := MockConfig(2)
 
-		// we need k and k2 to be two unique configs, so delete the first config in k2
-		err := k2.Remove("test")
+			// we need k and k2 to be two unique configs, so delete the first config in k2
+			err := k2.Remove("test")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
+			// force user names to be the same but with different configs
+			k2.AuthInfos["test"] = k2.AuthInfos["test-1"]
+			delete(k2.AuthInfos, "test-1")
 
-		k2.AuthInfos["test"] = k2.AuthInfos["test-1"]
-		delete(k2.AuthInfos, "test-1")
-		k.Merge(&k2.Config, "")
+			k.Merge(&k2.Config, "")
 
-		Expect(k).To(ContainContext("test"))
-		Expect(k).To(ContainContext("test-1"))
-		Expect(k.AuthInfos).To(HaveKey("test"))
-		Expect(k.AuthInfos).To(HaveKey("test-1"))
-	})
+			AssertUser(t, k, "test")
+			AssertUser(t, k, "test-1") // renamed user
+		},
+		"do not merge identical contexts": func(t *testing.T) {
+			k := MockConfig(1)
+			k2 := MockConfig(1)
 
-	It("Should not merge a completely identical kubeconfig", func() {
-		k := MockConfig(1)
-		k2 := MockConfig(1)
+			k.Merge(&k2.Config, "")
 
-		k.Merge(&k2.Config, "")
+			AssertContext(t, k, "test")
+			AssertNotContext(t, k, "test-1")
 
-		Expect(k).To(ContainContext("test"))
-		Expect(k).NotTo(ContainContext("test-1"))
-		Expect(len(k.Contexts)).To(Equal(1))
-	})
-})
+			if len(k.Contexts) != len(k2.Contexts) {
+				t.Errorf("expected: %d, got: %d", len(k2.Contexts), len(k.Contexts))
+			}
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

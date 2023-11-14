@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
@@ -36,7 +35,7 @@ func TestNamespaceCmd(t *testing.T) {
 		"fail if namespace is blank": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 2)
 
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			err := k.SetCurrentContext("test-1")
 			if err != nil {
 				t.Fatal(err)
@@ -59,7 +58,7 @@ func TestNamespaceCmd(t *testing.T) {
 		"set desired namespace": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 2)
 
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			err := k.SetCurrentContext("test-1")
 			if err != nil {
 				t.Fatal(err)

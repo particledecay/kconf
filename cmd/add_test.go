@@ -30,13 +30,22 @@ func TestAddCmd(t *testing.T) {
 		},
 		"rename context, cluster, and user": func(t *testing.T) {
 			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+
+			// change something about the config so it will be unique
+			k.Clusters["test"].Server = "https://some-other-server.com"
+			k.AuthInfos["test"].Username = "foo"
+			err := k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			// add the kubeconfig
 			addCmd := cmd.AddCmd()
 			addCmd.SilenceErrors = true
 			addCmd.SetArgs([]string{newConfig})
 
-			err := addCmd.Execute()
+			err = addCmd.Execute()
 			if err != nil {
 				t.Error(err)
 			}
@@ -71,6 +80,15 @@ func TestAddCmd(t *testing.T) {
 		},
 		"rename if custom context already exists": func(t *testing.T) {
 			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+
+			// change something about the config so it will be unique
+			k.Clusters["test"].Server = "https://some-other-server.com"
+			k.AuthInfos["test"].Username = "foo"
+			err := k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			// add the kubeconfig
 			addCmd := cmd.AddCmd()
@@ -80,7 +98,7 @@ func TestAddCmd(t *testing.T) {
 				"--context-name=test",
 			})
 
-			err := addCmd.Execute()
+			err = addCmd.Execute()
 			if err != nil {
 				t.Error(err)
 			}

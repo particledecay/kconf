@@ -197,7 +197,7 @@ func TestAddUser(t *testing.T) {
 				Token:            userToken,
 			}
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			testName := "testUser"
 			result := k.AddUser(testName, user)
 
@@ -218,7 +218,7 @@ func TestAddUser(t *testing.T) {
 				Token:            userToken,
 			}
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			testName := "test"
 			result := k.AddUser(testName, user)
 
@@ -239,7 +239,7 @@ func TestAddUser(t *testing.T) {
 				Token:            userToken,
 			}
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			testName := "test"
 			result := k.AddUser(testName, user)
 
@@ -265,7 +265,7 @@ func TestMoveContext(t *testing.T) {
 	var tests = map[string]func(*testing.T){
 		"move context to new name": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			err := k.MoveContext("test", "test-44")
 
 			if err != nil {
@@ -277,7 +277,7 @@ func TestMoveContext(t *testing.T) {
 		},
 		"fail if old context does not exist": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			err := k.MoveContext("test-3", "test-44")
 
 			if err == nil {
@@ -289,7 +289,7 @@ func TestMoveContext(t *testing.T) {
 		},
 		"fail if the new context already exists": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 2, 2)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			err := k.MoveContext("test", "test-1")
 
 			if err == nil {

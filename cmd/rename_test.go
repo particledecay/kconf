@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
@@ -26,10 +25,7 @@ func TestRenameCmd(t *testing.T) {
 			}
 
 			// should read new kubeconfig with new values
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertNotContext(t, k, oldName)
 			AssertContext(t, k, newName)
@@ -50,10 +46,7 @@ func TestRenameCmd(t *testing.T) {
 			}
 
 			// should have not modified kubeconfig
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertNotContext(t, k, newName)
 		},
@@ -74,10 +67,7 @@ func TestRenameCmd(t *testing.T) {
 			}
 
 			// should have not modified kubeconfig
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertNotContext(t, k, newName)
 		},

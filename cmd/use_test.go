@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
@@ -25,10 +24,7 @@ func TestUseCmd(t *testing.T) {
 			}
 
 			// should read new kubeconfig with new values
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertContext(t, k, currentContext)
 			if k.CurrentContext != currentContext {
@@ -51,10 +47,7 @@ func TestUseCmd(t *testing.T) {
 			}
 
 			// should read new kubeconfig with new values
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertContext(t, k, currentContext)
 			if k.CurrentContext != currentContext {

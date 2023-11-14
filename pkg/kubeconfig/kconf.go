@@ -35,7 +35,8 @@ func init() {
 
 // AddContext attempts to add a Context and return the resulting name
 func (k *KConf) AddContext(name string, context *clientcmdapi.Context) string {
-	if k.hasContext(context) {
+	// context exists and is identical
+	if _, ok := k.Contexts[name]; ok && k.hasContext(context) {
 		return ""
 	}
 	name, _ = k.rename(name, "context")

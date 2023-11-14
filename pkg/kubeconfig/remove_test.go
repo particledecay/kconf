@@ -3,8 +3,8 @@ package kubeconfig_test
 import (
 	"testing"
 
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
 func TestRemove(t *testing.T) {
@@ -12,12 +12,9 @@ func TestRemove(t *testing.T) {
 		"remove a context": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Fatal(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
-			err = k.Remove("test")
+			err := k.Remove("test")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -27,14 +24,11 @@ func TestRemove(t *testing.T) {
 		"do not remove user if another context is using it": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 2, 2)
 
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Fatal(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			// force the second context to use the first user
 			k.Contexts["test-1"].AuthInfo = "test"
-			err = k.Remove("test")
+			err := k.Remove("test")
 			if err != nil {
 				t.Error(err)
 			}
@@ -49,12 +43,9 @@ func TestRemove(t *testing.T) {
 		"fail if context does not exist": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Fatal(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
-			err = k.Remove("test-1")
+			err := k.Remove("test-1")
 			if err == nil {
 				t.Error("expected: error, got: nil")
 			}
@@ -64,6 +55,7 @@ func TestRemove(t *testing.T) {
 	}
 
 	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
 		t.Run(name, test)
 		PostTestCleanup()
 	}

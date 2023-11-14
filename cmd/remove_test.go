@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 	"github.com/rs/zerolog"
 )
@@ -26,10 +25,7 @@ func TestRemoveCmd(t *testing.T) {
 			}
 
 			// should not have the "test" context
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertNotContext(t, k, ctxName)
 		},
@@ -48,10 +44,7 @@ func TestRemoveCmd(t *testing.T) {
 			}
 
 			// should have not modified kubeconfig
-			k, err := kc.GetConfig()
-			if err != nil {
-				t.Error(err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			AssertContext(t, k, "test")
 		},

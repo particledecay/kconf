@@ -80,7 +80,7 @@ func TestList(t *testing.T) {
 		"return all context names": func(t *testing.T) {
 			contexts := []string{}
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 3, 3)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			for context := range k.Contexts {
 				contexts = append(contexts, context)
 			}
@@ -133,7 +133,7 @@ func TestExport(t *testing.T) {
 			config.CurrentContext = contextName
 
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			result, err := k.Export(contextName)
 
 			if err != nil {
@@ -153,7 +153,7 @@ func TestExport(t *testing.T) {
 		"fail if context does not exist": func(t *testing.T) {
 			contextName := "test-7"
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 			result, err := k.Export(contextName)
 
 			if result != nil {
@@ -178,7 +178,7 @@ func TestGetContent(t *testing.T) {
 		"convert a config into a separate kubeconfig": func(t *testing.T) {
 			contextName := "test-3"
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
-			k, _ := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 
 			// extract the bytes content
 			content, err := k.GetContent(contextName)
@@ -216,14 +216,10 @@ func TestGetConfig(t *testing.T) {
 		"return a kubeconfig": func(t *testing.T) {
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-			k, err := kc.GetConfig()
+			k := GetGlobalKubeconfig(t)
 
 			if k == nil {
 				t.Errorf("expected: non-nil, got: nil")
-			}
-
-			if err != nil {
-				t.Errorf("expected: nil, got: %v", err)
 			}
 
 			AssertContext(t, k, "test")
@@ -237,11 +233,7 @@ func TestGetConfig(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			k, err := kc.GetConfig()
-
-			if err != nil {
-				t.Errorf("expected: nil, got: %v", err)
-			}
+			k := GetGlobalKubeconfig(t)
 
 			if len(k.Contexts) != 0 {
 				t.Errorf("expected: 0, got: %d", len(k.Contexts))
