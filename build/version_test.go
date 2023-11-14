@@ -1,102 +1,132 @@
 package build_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	"github.com/particledecay/kconf/build"
+	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Build/PrintVersion", func() {
-	It("Should print nothing if a version is not set", func() {
-		// redirect stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+func TestPrintVersion(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"print nothing if version not set": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-		// all this function does is print to stdout
-		build.Version = ""
-		build.PrintVersion()
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		// read captured stdout
-		w.Close()
-		out, _ := ioutil.ReadAll(r)
+				// read captured stdout
+				out, _ := io.ReadAll(r)
 
-		// restore stdout
-		os.Stdout = oldStdout
+				if len(out) != 0 {
+					t.Errorf("expected: empty, got: %s", string(out))
+				}
+			}()
 
-		Expect(out).To(BeEmpty())
-	})
+			// all this function does is print to stdout
+			build.Version = ""
+			build.PrintVersion()
+		},
+		"print a version if set": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-	It("Should print a version if it was set", func() {
-		// redirect stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		// all this function does is print to stdout
-		build.Version = "1.2.3"
-		build.PrintVersion()
+				// read captured stdout
+				out, _ := io.ReadAll(r)
 
-		// read captured stdout
-		w.Close()
-		out, _ := ioutil.ReadAll(r)
+				if string(out) != "v1.2.3\n" {
+					t.Errorf("expected: v1.2.3, got: %s", string(out))
+				}
+			}()
 
-		// restore stdout
-		os.Stdout = oldStdout
+			// all this function does is print to stdout
+			build.Version = "1.2.3"
+			build.PrintVersion()
+		},
+	}
 
-		Expect(string(out)).To(Equal("v1.2.3\n"))
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+	}
+}
 
-var _ = Describe("Build/PrintLongVersion", func() {
-	It("Should print nothing if a version is not set", func() {
-		// redirect stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+func TestPrintLongVersion(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"print nothing if version not set": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-		// all this function does is print to stdout
-		build.Version = ""
-		build.PrintLongVersion()
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		// read captured stdout
-		w.Close()
-		out, _ := ioutil.ReadAll(r)
+				// read captured stdout
+				out, _ := io.ReadAll(r)
 
-		// restore stdout
-		os.Stdout = oldStdout
+				if len(out) != 0 {
+					t.Errorf("expected: empty, got: %s", string(out))
+				}
+			}()
 
-		Expect(out).To(BeEmpty())
-	})
+			// all this function does is print to stdout
+			build.Version = ""
+			err := build.PrintLongVersion()
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
+		},
+		"print a version if set": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-	It("Should print a version if it was set", func() {
-		// redirect stdout
-		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
-		os.Stdout = w
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		// all this function does is print to stdout
-		build.Version = "1.2.3"
-		build.Commit = "abcdef1234"
-		build.Date = "20200101"
-		build.PrintLongVersion()
+				// read captured stdout
+				out, _ := io.ReadAll(r)
 
-		// read captured stdout
-		w.Close()
-		out, _ := ioutil.ReadAll(r)
+				// expected substrings
+				expected := []string{
+					"Version",
+					"v1.2.3",
+					"SHA",
+					"abcdef1234",
+					"Built On",
+					"20200101",
+				}
 
-		// restore stdout
-		os.Stdout = oldStdout
+				AssertSubstrings(t, out, expected)
+			}()
 
-		Expect(string(out)).To(ContainSubstring("Version:"))
-		Expect(string(out)).To(ContainSubstring("v1.2.3"))
-		Expect(string(out)).To(ContainSubstring("SHA:"))
-		Expect(string(out)).To(ContainSubstring("abcdef1234"))
-		Expect(string(out)).To(ContainSubstring("Built On:"))
-		Expect(string(out)).To(ContainSubstring("20200101"))
-	})
-})
+			// all this function does is print to stdout
+			build.Version = "1.2.3"
+			build.Commit = "abcdef1234"
+			build.Date = "20200101"
+			err := build.PrintLongVersion()
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, test)
+	}
+}

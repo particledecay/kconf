@@ -1,42 +1,62 @@
 package kubeconfig_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
-var _ = Describe("Pkg/Kubeconfig/Remove", func() {
-	It("Should remove a context and all unused resources", func() {
-		k := MockConfig(1)
+func TestRemove(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"remove a context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-		err := k.Remove("test")
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext("test"))
-	})
+			err := k.Remove("test")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-	It("Should not remove a user if another context is using it", func() {
-		k := MockConfig(2)
+			AssertNotContext(t, k, "test")
+		},
+		"do not remove user if another context is using it": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 2, 2)
 
-		// force the second context to use the first user
-		k.Contexts["test-1"].AuthInfo = "test"
-		err := k.Remove("test")
+			k := GetGlobalKubeconfig(t)
 
-		_, ok := k.AuthInfos["test"]
+			// force the second context to use the first user
+			k.Contexts["test-1"].AuthInfo = "test"
+			err := k.Remove("test")
+			if err != nil {
+				t.Error(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext("test")) // test context not there
-		Expect(ok).To(BeTrue())                 // but user should be
-	})
+			AssertNotContext(t, k, "test")
 
-	It("Should fail if the context doesn't exist", func() {
-		k := MockConfig(1)
+			_, ok := k.AuthInfos["test"]
+			if !ok {
+				t.Error("expected: user to exist, got: nil")
+			}
+		},
+		"fail if context does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-		err := k.Remove("test-1")
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).To(HaveOccurred())
-		Expect(k).To(ContainContext("test"))
-	})
-})
+			err := k.Remove("test-1")
+			if err == nil {
+				t.Error("expected: error, got: nil")
+			}
+
+			AssertContext(t, k, "test")
+		},
+	}
+
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

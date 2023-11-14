@@ -1,41 +1,42 @@
 package cmd_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
+	"regexp"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
 )
 
-var _ = Describe("Cmd/Execute", func() {
-	It("Should display help text", func() {
-		// FIXME: Ginkgo supplies its own CLI flags which screws up stdout redirection
-		// see https://github.com/onsi/ginkgo/issues/285#issuecomment-290575636
-		// here we are truncating all args that aren't the command itself
-		origArgs := os.Args[:]
-		os.Args = os.Args[:1]
+func TestRootCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"display help text": func(t *testing.T) {
+			// redirect stdout
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-		// redirect stdout
-		r, w, _ := os.Pipe()
-		oldOut := os.Stdout
-		os.Stdout = w
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		cmd.Execute()
+				// read from r
+				out, _ := io.ReadAll(r)
 
-		// read captured stdout
-		_ = w.Close()
-		out, _ := ioutil.ReadAll(r)
+				var expected = []string{"kconf", "Usage:", "Flags:"}
+				for _, want := range expected {
+					if ok, _ := regexp.Match(want, out); !ok {
+						t.Errorf("expected '%s' in output '%s'", want, out)
+					}
+				}
+			}()
 
-		// restore stdout
-		os.Stdout = oldOut
+			cmd.Execute()
+		},
+	}
 
-		// restore args back to what they were
-		os.Args = origArgs[:]
-
-		Expect(out).To(ContainSubstring("kconf"))
-		Expect(out).To(ContainSubstring("Usage:"))
-		Expect(out).To(ContainSubstring("Flags:"))
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+	}
+}

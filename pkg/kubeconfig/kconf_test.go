@@ -1,203 +1,308 @@
 package kubeconfig_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
+
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
+	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Pkg/Kubeconfig/AddContext", func() {
-	It("Should add a context if it does not already exist in the kubeconfig", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test",
-			AuthInfo:         "test-1",
-			Namespace:        "default",
-		}
-		k := MockConfig(0)
-		testName := "testContext"
-		result := k.AddContext(testName, context)
+func TestAddContext(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"add a context if not already in kubeconfig": func(t *testing.T) {
+			context := &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          "test",
+				AuthInfo:         "test-1",
+				Namespace:        "default",
+				Extensions:       map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k, _ := kc.GetConfig()
+			testName := "testContext"
+			result := k.AddContext(testName, context)
 
-		Expect(result).To(Equal(testName))
-		Expect(k.Contexts).Should(HaveKey(testName))
+			if result != testName {
+				t.Errorf("expected: %s, got: %s", testName, result)
+			}
 
-		Expect(k.Contexts[testName].Cluster).To(Equal("test"))
-	})
+			AssertContext(t, k, testName)
 
-	It("Should not add a context if it already exists in the kubeconfig", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test",
-			AuthInfo:         "test",
-			Namespace:        "default",
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddContext(testName, context)
+			if k.Contexts[testName].Cluster != "test" {
+				t.Errorf("expected: test, got: %s", k.Contexts[testName].Cluster)
+			}
+		},
+		"do not add a context if already in kubeconfig": func(t *testing.T) {
+			context := &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          "test",
+				AuthInfo:         "test",
+				Namespace:        "default",
+				Extensions:       map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			testName := "test"
+			result := k.AddContext(testName, context)
 
-		Expect(result).To(BeEmpty())
-		Expect(k.Contexts).Should(HaveKey(testName))
+			if result != "" {
+				t.Errorf("expected: empty string, got: %s", result)
+			}
 
-		Expect(k.Contexts[testName].Cluster).To(Equal("test"))
-	})
+			AssertContext(t, k, testName)
 
-	It("Should add a context if even one field is different", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test-1",
-			AuthInfo:         "test",
-			Namespace:        "default",
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddContext(testName, context)
+			if k.Contexts[testName].Cluster != "test" {
+				t.Errorf("expected: test, got: %s", k.Contexts[testName].Cluster)
+			}
+		},
+		"add a context if already in kubeconfig but with different fields": func(t *testing.T) {
+			context := &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          "test-1",
+				AuthInfo:         "test",
+				Namespace:        "default",
+				Extensions:       map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			testName := "test"
+			result := k.AddContext(testName, context)
 
-		Expect(result).To(Equal("test-1"))
-		Expect(k.Contexts).Should(HaveKey("test-1"))
+			if result != "test-1" {
+				t.Errorf("expected: test-1, got: %s", result)
+			}
 
-		Expect(k.Contexts["test-1"].Cluster).To(Equal("test-1"))
-	})
+			AssertContext(t, k, "test-1")
 
-	It("Should add a context with context name", func() {
-		context := &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          "test-1",
-			AuthInfo:         "test",
-			Namespace:        "default",
-		}
-		k := MockConfig(0)
-		testName := "test"
-		result := k.AddContext(testName, context)
-		Expect(result).To(Equal(testName))
-	})
-})
+			if k.Contexts["test-1"].Cluster != "test-1" {
+				t.Errorf("expected: test-1, got: %s", k.Contexts["test-1"].Cluster)
+			}
+		},
+		"add a context with context name": func(t *testing.T) {
+			context := &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          "test-1",
+				AuthInfo:         "test",
+				Namespace:        "default",
+				Extensions:       map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k, _ := kc.GetConfig()
+			testName := "test"
+			result := k.AddContext(testName, context)
 
-var _ = Describe("Pkg/Kubeconfig/AddCluster", func() {
-	It("Should add a cluster if it does not already exist in the kubeconfig", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test.com:6443",
-			InsecureSkipTLSVerify:    false,
-			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
-			CertificateAuthorityData: DummyCert.Raw,
-		}
-		k := MockConfig(0)
-		testName := "testCluster"
-		result := k.AddCluster(testName, cluster)
+			if result != testName {
+				t.Errorf("expected: %s, got: %s", testName, result)
+			}
+		},
+	}
 
-		Expect(result).To(Equal(testName))
-		Expect(k.Clusters).Should(HaveKey(testName))
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(k.Clusters[testName].Server).To(Equal("https://example-test.com:6443"))
-	})
+func TestAddCluster(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"add a cluster not already in kubeconfig": func(t *testing.T) {
+			cluster := &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   "https://example-test.com:6443",
+				InsecureSkipTLSVerify:    false,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k, _ := kc.GetConfig()
+			testName := "testCluster"
+			result := k.AddCluster(testName, cluster)
 
-	It("Should not add a cluster if it already exists in the kubeconfig", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test.com:6443",
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
-			CertificateAuthorityData: DummyCert.Raw,
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddCluster(testName, cluster)
+			if result != testName {
+				t.Errorf("expected: %s, got: %s", testName, result)
+			}
 
-		Expect(result).To(BeEmpty())
-		Expect(k.Clusters).Should(HaveKey(testName))
+			AssertCluster(t, k, testName)
 
-		Expect(k.Clusters[testName].Server).To(Equal("https://example-test.com:6443"))
-	})
+			if k.Clusters[testName].Server != "https://example-test.com:6443" {
+				t.Errorf("expected: https://example-test.com:6443, got: %s", k.Clusters[testName].Server)
+			}
+		},
+		"do not add a cluster if already in kubeconfig": func(t *testing.T) {
+			cluster := &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   "https://example-test.com:6443",
+				InsecureSkipTLSVerify:    true,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			testName := "test"
+			result := k.AddCluster(testName, cluster)
 
-	It("Should add a cluster if even one field is different", func() {
-		cluster := &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   "https://example-test.com:6443",
-			InsecureSkipTLSVerify:    false,
-			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
-			CertificateAuthorityData: DummyCert.Raw,
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddCluster(testName, cluster)
+			if result != "" {
+				t.Errorf("expected: empty string, got: %s", result)
+			}
 
-		Expect(result).To(Equal("test-1"))
-		Expect(k.Clusters).Should(HaveKey("test-1"))
+			AssertCluster(t, k, testName)
 
-		Expect(k.Clusters["test-1"].InsecureSkipTLSVerify).To(BeFalse())
-	})
-})
+			if k.Clusters[testName].Server != "https://example-test.com:6443" {
+				t.Errorf("expected: https://example-test.com:6443, got: %s", k.Clusters[testName].Server)
+			}
+		},
+		"add a cluster if already in kubeconfig but with different fields": func(t *testing.T) {
+			cluster := &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   "https://example-test.com:6443",
+				InsecureSkipTLSVerify:    false,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]apiruntime.Object{},
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k, _ := kc.GetConfig()
+			testName := "test"
+			result := k.AddCluster(testName, cluster)
 
-var _ = Describe("Pkg/Kubeconfig/AddUser", func() {
-	It("Should add a user if it does not already exist in the kubeconfig", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test",
-		}
-		k := MockConfig(0)
-		testName := "testUser"
-		result := k.AddUser(testName, user)
+			if result != "test-1" {
+				t.Errorf("expected: test-1, got: %s", result)
+			}
 
-		Expect(result).To(Equal(testName))
-		Expect(k.AuthInfos).Should(HaveKey(testName))
+			AssertCluster(t, k, "test-1")
 
-		Expect(k.AuthInfos[testName].Token).To(Equal("bbbbbbbbbbbb-test"))
-	})
+			if k.Clusters["test-1"].InsecureSkipTLSVerify != false {
+				t.Errorf("expected: false, got: %v", k.Clusters["test-1"].InsecureSkipTLSVerify)
+			}
+		},
+	}
 
-	It("Should not add a user if it already exists in the kubeconfig", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test",
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddUser(testName, user)
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(result).To(BeEmpty())
-		Expect(k.AuthInfos).Should(HaveKey(testName))
+func TestAddUser(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"add a user not already in kubeconfig": func(t *testing.T) {
+			userToken := "bbbbbbbbbbbb-test"
+			user := &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            userToken,
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+			k := GetGlobalKubeconfig(t)
+			testName := "testUser"
+			result := k.AddUser(testName, user)
 
-		Expect(k.AuthInfos[testName].Token).To(Equal("bbbbbbbbbbbb-test"))
-	})
+			if result != testName {
+				t.Errorf("expected: %s, got: %s", testName, result)
+			}
 
-	It("Should add a user if even one field is different", func() {
-		user := &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            "bbbbbbbbbbbb-test-1",
-		}
-		k := MockConfig(1)
-		testName := "test"
-		result := k.AddUser(testName, user)
+			AssertUser(t, k, testName)
 
-		Expect(result).To(Equal("test-1"))
-		Expect(k.AuthInfos).Should(HaveKey("test-1"))
+			if k.AuthInfos[testName].Token != userToken {
+				t.Errorf("expected: %s, got: %s", userToken, k.AuthInfos[testName].Token)
+			}
+		},
+		"do not add a user if already in kubeconfig": func(t *testing.T) {
+			userToken := "bbbbbbbbbbbb-test"
+			user := &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            userToken,
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+			testName := "test"
+			result := k.AddUser(testName, user)
 
-		Expect(k.AuthInfos["test-1"].Token).To(Equal("bbbbbbbbbbbb-test-1"))
-	})
-})
+			if result != "" {
+				t.Errorf("expected: empty string, got: %s", result)
+			}
 
-var _ = Describe("Pkg/Kubeconfig/MoveContext", func() {
-	It("Should move an existing context to a new context", func() {
-		k := MockConfig(1)
-		err := k.MoveContext("test", "test-44")
+			AssertUser(t, k, testName)
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).To(ContainContext("test-44"))
-	})
+			if k.AuthInfos[testName].Token != userToken {
+				t.Errorf("expected: %s, got: %s", userToken, k.AuthInfos[testName].Token)
+			}
+		},
+		"add a user if already in kubeconfig but with different fields": func(t *testing.T) {
+			userToken := "bbbbbbbbbbbb-test-1"
+			user := &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            userToken,
+			}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+			testName := "test"
+			result := k.AddUser(testName, user)
 
-	It("Should fail if moving a context that doesn't exist", func() {
-		k := MockConfig(1)
-		err := k.MoveContext("test-3", "test-44")
+			if result != "test-1" {
+				t.Errorf("expected: test-1, got: %s", result)
+			}
 
-		Expect(err).To(HaveOccurred())
-		Expect(k).NotTo(ContainContext("test-44"))
-	})
+			AssertUser(t, k, "test-1")
 
-	It("Should fail if the new context name already exists", func() {
-		k := MockConfig(2)
-		err := k.MoveContext("test", "test-1")
+			if k.AuthInfos["test-1"].Token != userToken {
+				t.Errorf("expected: %s, got: %s", userToken, k.AuthInfos["test-1"].Token)
+			}
+		},
+	}
 
-		Expect(err).To(HaveOccurred())
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
+
+func TestMoveContext(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"move context to new name": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+			err := k.MoveContext("test", "test-44")
+
+			if err != nil {
+				t.Errorf("expected: nil, got: %s", err)
+			}
+
+			AssertNotContext(t, k, "test")
+			AssertContext(t, k, "test-44")
+		},
+		"fail if old context does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
+			err := k.MoveContext("test-3", "test-44")
+
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+
+			AssertNotContext(t, k, "test-3")
+			AssertNotContext(t, k, "test-44")
+		},
+		"fail if the new context already exists": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 2, 2)
+			k := GetGlobalKubeconfig(t)
+			err := k.MoveContext("test", "test-1")
+
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+
+			AssertContext(t, k, "test")
+			AssertContext(t, k, "test-1")
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

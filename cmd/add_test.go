@@ -2,180 +2,137 @@ package cmd_test
 
 import (
 	"fmt"
-	"os"
-	"path"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	"github.com/particledecay/kconf/cmd"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
-var _ = Describe("Cmd/AddCmd", func() {
-	// restore the original config path to avoid weirdness
-	AfterEach(func() {
-		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
-		CleanupFiles()
-	})
+func TestAddCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"add a new kubeconfig": func(t *testing.T) {
+			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 0)
 
-	It("Should add a new kubeconfig", func() {
-		// create a kubeconfig to add
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-		newConfig := kc.MainConfigPath
+			// add the kubeconfig
+			addCmd := cmd.AddCmd()
+			addCmd.SilenceErrors = true
+			addCmd.SetArgs([]string{newConfig})
 
-		// create the base kubeconfig
-		tmpfile, err := MakeTmpFile()
-		if err != nil {
-			panic(err)
-		}
-		kc.MainConfigPath = tmpfile.Name()
+			err := addCmd.Execute()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		// add the kubeconfig
-		addCmd := cmd.AddCmd()
-		addCmd.SilenceErrors = true
-		addCmd.SetArgs([]string{newConfig})
-		err = addCmd.Execute()
+			k2 := GetGlobalKubeconfig(t)
+			AssertContext(t, k2, "test")
+		},
+		"rename context, cluster, and user": func(t *testing.T) {
+			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).NotTo(HaveOccurred())
+			// change something about the config so it will be unique
+			k.Clusters["test"].Server = "https://some-other-server.com"
+			k.AuthInfos["test"].Username = "foo"
+			err := k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		k2, err := kc.GetConfig()
+			// add the kubeconfig
+			addCmd := cmd.AddCmd()
+			addCmd.SilenceErrors = true
+			addCmd.SetArgs([]string{newConfig})
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext("test"))
-	})
+			err = addCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-	It("Should rename cluster, user, and context if one already exists", func() {
-		// create a kubeconfig to add
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-		newConfig := kc.MainConfigPath
+			k2 := GetGlobalKubeconfig(t)
+			AssertContext(t, k2, "test")
+			AssertContext(t, k2, "test-1")
+			AssertCluster(t, k2, "test")
+			AssertCluster(t, k2, "test-1")
+			AssertUser(t, k2, "test")
+			AssertUser(t, k2, "test-1")
+		},
+		"add new kubeconfig with custom context name": func(t *testing.T) {
+			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-		// create the base kubeconfig with a context
-		k2 := MockConfig(1)
-		err = k2.Save()
-		if err != nil {
-			panic(err)
-		}
+			// add the kubeconfig
+			newContext := "booyah"
+			addCmd := cmd.AddCmd()
+			addCmd.SilenceErrors = true
+			addCmd.SetArgs([]string{
+				newConfig,
+				fmt.Sprintf("--context-name=%s", newContext),
+			})
 
-		// add the kubeconfig
-		addCmd := cmd.AddCmd()
-		addCmd.SilenceErrors = true
-		addCmd.SetArgs([]string{newConfig})
-		err = addCmd.Execute()
+			err := addCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
+			k2 := GetGlobalKubeconfig(t)
+			AssertContext(t, k2, newContext)
+		},
+		"rename if custom context already exists": func(t *testing.T) {
+			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			k := GetGlobalKubeconfig(t)
 
-		k3, err := kc.GetConfig()
+			// change something about the config so it will be unique
+			k.Clusters["test"].Server = "https://some-other-server.com"
+			k.AuthInfos["test"].Username = "foo"
+			err := k.Save()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k3).To(ContainContext("test"))
-		Expect(k3).To(ContainContext("test-1"))
-		Expect(k3.Clusters).To(HaveKey("test"))
-		Expect(k3.Clusters).To(HaveKey("test-1"))
-		Expect(k3.AuthInfos).To(HaveKey("test"))
-		Expect(k3.AuthInfos).To(HaveKey("test-1"))
-	})
+			// add the kubeconfig
+			addCmd := cmd.AddCmd()
+			addCmd.SilenceErrors = true
+			addCmd.SetArgs([]string{
+				newConfig,
+				"--context-name=test",
+			})
 
-	It("Should add a new kubeconfig with a custom context name", func() {
-		// create a kubeconfig to add
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-		newConfig := kc.MainConfigPath
+			err = addCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-		// create the base kubeconfig
-		tmpfile, err := MakeTmpFile()
-		if err != nil {
-			panic(err)
-		}
-		kc.MainConfigPath = tmpfile.Name()
+			k2 := GetGlobalKubeconfig(t)
+			AssertContext(t, k2, "test-1")
+		},
+		"fail if kubeconfig is invalid": func(t *testing.T) {
+			newConfig := GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 
-		// add the kubeconfig
-		newContext := "booyah"
-		addCmd := cmd.AddCmd()
-		addCmd.SilenceErrors = true
-		addCmd.SetArgs([]string{
-			newConfig,
-			fmt.Sprintf("--context-name=%s", newContext),
-		})
-		err = addCmd.Execute()
+			// create the base kubeconfig
+			tmpfile, err := MakeTmpFile()
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = tmpfile.Write([]byte("ajsdlkfjasldfkjlasdkf"))
+			kc.MainConfigPath = tmpfile.Name()
 
-		Expect(err).NotTo(HaveOccurred())
+			// add the kubeconfig
+			addCmd := cmd.AddCmd()
+			addCmd.SilenceUsage = true
+			addCmd.SilenceErrors = true
+			addCmd.SetArgs([]string{newConfig})
+			err = addCmd.Execute()
 
-		k2, err := kc.GetConfig()
+			if err == nil {
+				t.Error("Expected error when kubeconfig is invalid")
+			}
+		},
+	}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext(newContext))
-	})
-
-	It("Should trigger a rename if a custom context name already exists", func() {
-		// create a kubeconfig to add
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-		newConfig := kc.MainConfigPath
-
-		// create the base kubeconfig with a context
-		k2 := MockConfig(2)
-		err = k2.Save()
-		if err != nil {
-			panic(err)
-		}
-
-		// add the kubeconfig
-		addCmd := cmd.AddCmd()
-		addCmd.SilenceErrors = true
-		addCmd.SetArgs([]string{
-			newConfig,
-			"--context-name=test-1",
-		})
-		err = addCmd.Execute()
-
-		// Expect(err).To(HaveOccurred())
-		Expect(err).NotTo(HaveOccurred())
-
-		k3, _ := kc.GetConfig()
-
-		Expect(k3).To(ContainContext("test-1-1"))
-	})
-
-	It("Should fail if the kubeconfig is invalid", func() {
-		// create a kubeconfig to add
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-		newConfig := kc.MainConfigPath
-
-		// create the base kubeconfig
-		tmpfile, err := MakeTmpFile()
-		if err != nil {
-			panic(err)
-		}
-		_, _ = tmpfile.Write([]byte("ajsdlkfjasldfkjlasdkf"))
-		kc.MainConfigPath = tmpfile.Name()
-
-		// add the kubeconfig
-		addCmd := cmd.AddCmd()
-		addCmd.SilenceUsage = true
-		addCmd.SilenceErrors = true
-		addCmd.SetArgs([]string{newConfig})
-		err = addCmd.Execute()
-
-		Expect(err).To(HaveOccurred())
-	})
-})
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

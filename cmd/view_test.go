@@ -1,77 +1,72 @@
 package cmd_test
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Cmd/ViewCmd", func() {
-	It("Should print the given context to stdout", func() {
-		k := MockConfig(3)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+func TestViewCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"print context to stdout": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 3)
 
-		// FIXME: Ginkgo supplies its own CLI flags which screws up stdout redirection
-		// see https://github.com/onsi/ginkgo/issues/285#issuecomment-290575636
-		// here we are truncating all args that aren't the command itself
-		origArgs := os.Args[:]
-		os.Args = os.Args[:1]
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
 
-		// redirect stdout
-		r, w, _ := os.Pipe()
-		oldStdout := os.Stdout
-		os.Stdout = w
+			defer func() {
+				w.Close()
+				os.Stdout = oldStdout
 
-		viewCmd := cmd.ViewCmd()
-		viewCmd.SilenceErrors = true
-		viewCmd.SilenceUsage = true
-		viewCmd.SetArgs([]string{"test-2"})
-		err = viewCmd.Execute()
+				// read from r
+				out, _ := io.ReadAll(r)
 
-		Expect(err).NotTo(HaveOccurred())
+				// check that the output contains the contexts we expect
+				AssertSubstrings(t, out, []string{"test-2"})
+			}()
 
-		// read captured stdout
-		_ = w.Close()
-		out, _ := ioutil.ReadAll(r)
+			// view context
+			viewCmd := cmd.ViewCmd()
+			viewCmd.SilenceErrors = true
+			viewCmd.SilenceUsage = true
+			viewCmd.SetArgs([]string{"test-2"})
 
-		// restore stdout
-		os.Stdout = oldStdout
+			err := viewCmd.Execute()
+			if err != nil {
+				t.Fatal(err)
+			}
+		},
+		"fail if no arguments provided": func(t *testing.T) {
+			viewCmd := cmd.ViewCmd()
+			viewCmd.SilenceErrors = true
+			viewCmd.SilenceUsage = true
 
-		// restore args back to what they were
-		os.Args = origArgs[:]
+			err := viewCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
+		},
+		"fail if context does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 3)
 
-		Expect(out).To(ContainSubstring("test-2"))
-	})
+			viewCmd := cmd.ViewCmd()
+			viewCmd.SilenceErrors = true
+			viewCmd.SilenceUsage = true
+			viewCmd.SetArgs([]string{"test-5"})
 
-	It("Should fail if no arguments are provided", func() {
-		viewCmd := cmd.ViewCmd()
-		viewCmd.SilenceErrors = true
-		viewCmd.SilenceUsage = true
-		err := viewCmd.Execute()
+			err := viewCmd.Execute()
+			if err == nil {
+				t.Error("expected error to occur")
+			}
+		},
+	}
 
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("Should fail if viewing a context that does not exist", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
-
-		viewCmd := cmd.ViewCmd()
-		viewCmd.SilenceErrors = true
-		viewCmd.SilenceUsage = true
-		viewCmd.SetArgs([]string{"test-1"})
-		err = viewCmd.Execute()
-
-		Expect(err).To(HaveOccurred())
-	})
-})
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

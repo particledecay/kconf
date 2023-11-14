@@ -2,173 +2,248 @@ package kubeconfig_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path"
 	"sort"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
+	runtimeapi "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-var _ = Describe("Pkg/Kubeconfig/Read", func() {
-	BeforeEach(func() {
-		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
-	})
+func TestRead(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"fail if kubeconfig doesn't exist": func(t *testing.T) {
+			config, err := kc.Read("/some/nonexistent/path")
 
-	It("Should fail if kubeconfig doesn't exist", func() {
-		config, err := kc.Read("/some/nonexistent/path")
+			if config != nil {
+				t.Errorf("expected: nil, got: %v", config)
+			}
 
-		Expect(config).To(BeNil())
-		Expect(err).Should(HaveOccurred())
-	})
+			if err == nil {
+				t.Error("expected: error, got: nil")
+			}
+		},
+		"read and return a valid kubeconfig": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			config, err := kc.Read(kc.MainConfigPath)
 
-	It("Should read and return a valid kubeconfig", func() {
-		_ = MockConfig(1)
-		config, err := kc.Read(kc.MainConfigPath)
+			if config == nil {
+				t.Error("expected: config, got: nil")
+			}
 
-		Expect(config).NotTo(BeNil())
-		Expect(err).ShouldNot(HaveOccurred())
-	})
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
+		},
+		"read a kubeconfig from stdin": func(t *testing.T) {
+			// redirect stdin
+			oldStdin := os.Stdin
+			r, w, _ := os.Pipe()
+			os.Stdin = r
 
-	It("Should read a kubeconfig from stdin", func() {
-		// redirect stdin
-		oldStdin := os.Stdin
-		r, w, _ := os.Pipe()
-		os.Stdin = r
+			defer func() {
+				os.Stdin = oldStdin
+			}()
 
-		// write some data to stdin
-		_ = MockConfig(1)
-		confdata, _ := os.ReadFile(kc.MainConfigPath)
-		w.Write(confdata)
-		w.Close()
+			// write some data to stdin
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+			confdata, _ := os.ReadFile(kc.MainConfigPath)
+			w.Write(confdata)
+			w.Close()
 
-		// run function to read from stdin
-		config, err := kc.Read("")
+			// run function to read from stdin
+			config, err := kc.Read("")
 
-		// restore stdin
-		os.Stdin = oldStdin
+			if config == nil {
+				t.Error("expected: config, got: nil")
+			}
 
-		Expect(config).NotTo(BeNil())
-		Expect(err).ShouldNot(HaveOccurred())
-	})
-})
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
+		},
+	}
 
-var _ = Describe("Pkg/Kubeconfig/List", func() {
-	It("Should return all context names", func() {
-		contexts := []string{}
-		k := MockConfig(3)
-		for context := range k.Contexts {
-			contexts = append(contexts, context)
-		}
-		sort.Strings(contexts)
-		Expect(contexts).To(Equal([]string{"test", "test-1", "test-2"}))
-	})
-})
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-var _ = Describe("Pkg/Kubeconfig/Export", func() {
-	It("Should return a single usable config when given a context name", func() {
-		contextName := "test-3"
-		config := clientcmdapi.NewConfig()
-		config.Clusters[contextName] = &clientcmdapi.Cluster{
-			LocationOfOrigin:         "/home/user/.kube/config",
-			Server:                   fmt.Sprintf("https://example-%s.com:6443", contextName),
-			InsecureSkipTLSVerify:    true,
-			CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
-			CertificateAuthorityData: DummyCert.Raw,
-		}
-		config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", contextName),
-		}
-		config.Contexts[contextName] = &clientcmdapi.Context{
-			LocationOfOrigin: "/home/user/.kube/config",
-			Cluster:          contextName,
-			AuthInfo:         contextName,
-			Namespace:        "default",
-		}
-		config.CurrentContext = contextName
+func TestList(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"return all context names": func(t *testing.T) {
+			contexts := []string{}
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 3, 3)
+			k := GetGlobalKubeconfig(t)
+			for context := range k.Contexts {
+				contexts = append(contexts, context)
+			}
+			sort.Strings(contexts)
+			if len(contexts) != 3 {
+				t.Errorf("expected: 3, got: %d", len(contexts))
+			}
 
-		k := MockConfig(5)
+			// compare expected list to returned list
+			expected := []string{"test", "test-1", "test-2"}
+			for i := range contexts {
+				if contexts[i] != expected[i] {
+					t.Errorf("expected: %v, got: %v", expected, contexts)
+				}
+			}
+		},
+	}
 
-		// extract the one config out of the mocked configs
-		result, err := k.Export(contextName)
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(result).To(Equal(config))
-		Expect(err).ShouldNot(HaveOccurred())
-	})
+func TestExport(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"return a single usable config when given a context name": func(t *testing.T) {
+			contextName := "test-3"
+			config := clientcmdapi.NewConfig()
+			config.Clusters[contextName] = &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   fmt.Sprintf("https://example-%s.com:6443", contextName),
+				InsecureSkipTLSVerify:    true,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]runtimeapi.Object{},
+			}
+			config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", contextName),
+			}
+			config.Contexts[contextName] = &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          contextName,
+				AuthInfo:         contextName,
+				Namespace:        "default",
+				Extensions:       map[string]runtimeapi.Object{},
+			}
+			config.CurrentContext = contextName
 
-	It("Should fail if context doesn't exist", func() {
-		contextName := "test-7"
-		k := MockConfig(5)
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
+			k := GetGlobalKubeconfig(t)
+			result, err := k.Export(contextName)
 
-		result, err := k.Export(contextName)
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
 
-		Expect(result).To(BeNil())
-		Expect(err).Should(HaveOccurred())
-	})
-})
+			if kc.IsEqualCluster(result.Clusters[contextName], config.Clusters[contextName]) == false {
+				t.Errorf("expected: %v, got: %v", config.Clusters[contextName], result.Clusters[contextName])
+			}
+			if kc.IsEqualUser(result.AuthInfos[contextName], config.AuthInfos[contextName]) == false {
+				t.Errorf("expected: %v, got: %v", config.AuthInfos[contextName], result.AuthInfos[contextName])
+			}
+			if kc.IsEqualContext(result.Contexts[contextName], config.Contexts[contextName]) == false {
+				t.Errorf("expected: %v, got: %v", config.Contexts[contextName], result.Contexts[contextName])
+			}
+		},
+		"fail if context does not exist": func(t *testing.T) {
+			contextName := "test-7"
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
+			k := GetGlobalKubeconfig(t)
+			result, err := k.Export(contextName)
 
-var _ = Describe("Pkg/Kubeconfig/GetContent", func() {
-	It("Should properly convert a config into bytes that can be written and used as a separate kubeconfig", func() {
-		contextName := "test-3"
-		k := MockConfig(5)
+			if result != nil {
+				t.Errorf("expected: nil, got: %v", result)
+			}
 
-		// extract the bytes content
-		content, err := k.GetContent(contextName)
+			if err == nil {
+				t.Errorf("expected: error, got: nil")
+			}
+		},
+	}
 
-		Expect(content).ToNot(BeEmpty()) // this helps with the validity check below so we don't get a valid empty config
-		Expect(err).ShouldNot(HaveOccurred())
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		// convert back to a config as a validity check
-		config, err := clientcmd.Load(content)
+func TestGetContent(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"convert a config into a separate kubeconfig": func(t *testing.T) {
+			contextName := "test-3"
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 5, 5)
+			k := GetGlobalKubeconfig(t)
 
-		Expect(config).ToNot(BeNil())
-		Expect(err).ShouldNot(HaveOccurred())
-	})
-})
+			// extract the bytes content
+			content, err := k.GetContent(contextName)
 
-var _ = Describe("Pkg/Kubeconfig/GetConfig", func() {
-	It("Should return a kubeconfig", func() {
-		k := MockConfig(1)
+			if len(content) == 0 {
+				t.Errorf("expected: non-empty, got: empty")
+			}
 
-		// create a random file to ensure a config exists
-		tmpfile, err := ioutil.TempFile("", "test-config-5")
-		if err != nil {
-			panic(err)
-		}
-		kc.MainConfigPath = tmpfile.Name()
-		err = k.Save()
-		if err != nil {
-			panic(err)
-		}
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
 
-		k2, err := kc.GetConfig()
+			// convert back to a config as a validity check
+			config, err := clientcmd.Load(content)
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext("test"))
-	})
+			if config == nil {
+				t.Errorf("expected: non-nil, got: nil")
+			}
 
-	It("Should create a new kubeconfig if a file doesn't already exist", func() {
-		// create a random file to ensure a config exists
-		tmpfile, err := ioutil.TempFile("", "test-config-6")
-		if err != nil {
-			panic(err)
-		}
-		filename := tmpfile.Name()
-		err = os.Remove(filename)
-		if err != nil {
-			panic(err)
-		}
-		kc.MainConfigPath = filename
+			if err != nil {
+				t.Errorf("expected: nil, got: %v", err)
+			}
+		},
+	}
 
-		k, err := kc.GetConfig()
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k.Contexts).To(BeEmpty())
-	})
-})
+func TestGetConfig(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"return a kubeconfig": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
+
+			k := GetGlobalKubeconfig(t)
+
+			if k == nil {
+				t.Errorf("expected: non-nil, got: nil")
+			}
+
+			AssertContext(t, k, "test")
+		},
+		"create new kubeconfig if file does not exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 0)
+
+			// remove it
+			err := os.Remove(kc.MainConfigPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			k := GetGlobalKubeconfig(t)
+
+			if len(k.Contexts) != 0 {
+				t.Errorf("expected: 0, got: %d", len(k.Contexts))
+			}
+		},
+	}
+
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

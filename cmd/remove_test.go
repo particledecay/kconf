@@ -1,67 +1,58 @@
 package cmd_test
 
 import (
-	"os"
-	"path"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
+	"github.com/rs/zerolog"
 )
 
-var _ = Describe("Cmd/RemoveCmd", func() {
+func TestRemoveCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"remove a context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-	// restore the original config path to avoid weirdness
-	AfterEach(func() {
-		kc.MainConfigPath = path.Join(os.Getenv("HOME"), ".kube", "config")
-		CleanupFiles()
-	})
+			// remove "test"
+			ctxName := "test"
+			removeCmd := cmd.RemoveCmd()
+			removeCmd.SilenceErrors = true
+			removeCmd.SetArgs([]string{ctxName})
+			err := removeCmd.Execute()
 
-	It("Should remove a context from the kubeconfig", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			if err != nil {
+				t.Error(err)
+			}
 
-		// remove "test"
-		ctxName := "test"
-		removeCmd := cmd.RemoveCmd()
-		removeCmd.SilenceErrors = true
-		removeCmd.SetArgs([]string{ctxName})
-		err = removeCmd.Execute()
+			// should not have the "test" context
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).NotTo(HaveOccurred())
+			AssertNotContext(t, k, ctxName)
+		},
+		"fail when context doesn't exist": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 1)
 
-		// should not have the "test" context
-		k, err = kc.GetConfig()
+			// remove "test-1" which doesn't exist
+			ctxName := "test-1"
+			removeCmd := cmd.RemoveCmd()
+			removeCmd.SilenceErrors = true
+			removeCmd.SetArgs([]string{ctxName})
+			err := removeCmd.Execute()
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).NotTo(ContainContext(ctxName))
-	})
+			if err == nil {
+				t.Error("expected error to occur")
+			}
 
-	It("Should fail when context doesn't exist", func() {
-		k := MockConfig(1)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			// should have not modified kubeconfig
+			k := GetGlobalKubeconfig(t)
 
-		// remove "test-1" which doesn't exist
-		ctxName := "test-1"
-		removeCmd := cmd.RemoveCmd()
-		removeCmd.SilenceErrors = true
-		removeCmd.SetArgs([]string{ctxName})
-		err = removeCmd.Execute()
+			AssertContext(t, k, "test")
+		},
+	}
 
-		Expect(err).To(HaveOccurred())
-
-		// should have not modified kubeconfig
-		k, err = kc.GetConfig()
-
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k).To(ContainContext("test"))
-	})
-})
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}

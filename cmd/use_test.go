@@ -1,57 +1,67 @@
 package cmd_test
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
+
 	"github.com/particledecay/kconf/cmd"
-	kc "github.com/particledecay/kconf/pkg/kubeconfig"
 	. "github.com/particledecay/kconf/test"
 )
 
-var _ = Describe("Cmd/UseCmd", func() {
-	It("Should select a current context", func() {
-		k := MockConfig(2)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+func TestUseCmd(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"select current context": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 2)
 
-		currentContext := "test-1"
-		useCmd := cmd.UseCmd()
-		useCmd.SilenceErrors = true
-		useCmd.SetArgs([]string{currentContext})
-		err = useCmd.Execute()
+			// select "test-1"
+			currentContext := "test-1"
+			useCmd := cmd.UseCmd()
+			useCmd.SilenceErrors = true
+			useCmd.SetArgs([]string{currentContext})
 
-		Expect(err).NotTo(HaveOccurred())
+			err := useCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-		k2, err := kc.GetConfig()
+			// should read new kubeconfig with new values
+			k := GetGlobalKubeconfig(t)
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext(currentContext))
-		Expect(k2.CurrentContext).To(Equal(currentContext))
-	})
+			AssertContext(t, k, currentContext)
+			if k.CurrentContext != currentContext {
+				t.Errorf("expected: %s, got: %s", currentContext, k.CurrentContext)
+			}
+		},
+		"set preferred namespace": func(t *testing.T) {
+			_ = GenerateAndReplaceGlobalKubeconfig(t, 0, 5)
 
-	It("Should set a preferred namespace if provided", func() {
-		k := MockConfig(5)
-		err := k.Save()
-		if err != nil {
-			panic(err)
-		}
+			// select "test-2"
+			currentContext := "test-2"
+			namespace := "kube-system"
+			useCmd := cmd.UseCmd()
+			useCmd.SilenceErrors = true
+			useCmd.SetArgs([]string{currentContext, "-n", namespace})
 
-		currentContext := "test-2"
-		namespace := "kube-system"
-		useCmd := cmd.UseCmd()
-		useCmd.SilenceErrors = true
-		useCmd.SetArgs([]string{currentContext, "-n", namespace})
-		err = useCmd.Execute()
+			err := useCmd.Execute()
+			if err != nil {
+				t.Error(err)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
+			// should read new kubeconfig with new values
+			k := GetGlobalKubeconfig(t)
 
-		k2, err := kc.GetConfig()
+			AssertContext(t, k, currentContext)
+			if k.CurrentContext != currentContext {
+				t.Errorf("expected: %s, got: %s", currentContext, k.CurrentContext)
+			}
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(k2).To(ContainContext(currentContext))
-		Expect(k2.CurrentContext).To(Equal(currentContext))
-		Expect(k2.Config.Contexts[currentContext].Namespace).To(Equal(namespace))
-	})
-})
+			if k.Config.Contexts[currentContext].Namespace != namespace {
+				t.Errorf("expected: %s, got: %s", namespace, k.Config.Contexts[currentContext].Namespace)
+			}
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
