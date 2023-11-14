@@ -18,6 +18,6 @@ Check your PR for the following:
 
 - [ ] you included tests
 - [ ] you linted your code
-- [ ] your PR has only one commit (interactive rebase!)
+- [ ] your PR has appropriate, atomic commits (interactive rebase!)
 - [ ] your commit message follows Conventional Commit format
 - [ ] you are not reducing the total test coverage
