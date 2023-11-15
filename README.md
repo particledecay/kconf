@@ -13,6 +13,8 @@
 
 ## Description
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ade1fd2e898c4039ada4a4002ede688e)](https://app.codacy.com/gh/particledecay/kconf?utm_source=github.com&utm_medium=referral&utm_content=particledecay/kconf&utm_campaign=Badge_Grade)
+
 kconf works by storing all kubeconfig information in a single file (`$HOME/.kube/config`). This file is looked at by default when using `kubectl`.
 
 ## Usage
