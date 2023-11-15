@@ -4,8 +4,7 @@
   <p align="center">
     <a href="https://github.com/particledecay/kconf/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/particledecay/kconf"></a>
     <a href="https://github.com/particledecay/kconf/actions/workflows/coverage.yml"><img alt="Test Status" src="https://github.com/particledecay/kconf/actions/workflows/coverage.yml/badge.svg"></a>
-    <a href="https://codeclimate.com/github/particledecay/kconf/maintainability"><img src="https://api.codeclimate.com/v1/badges/dd1904e8f1f515bad0b5/maintainability" /></a>
-    <a href="https://codeclimate.com/github/particledecay/kconf/test_coverage"><img src="https://api.codeclimate.com/v1/badges/dd1904e8f1f515bad0b5/test_coverage" /></a>
+    <a href="https://app.codacy.com/gh/particledecay/kconf/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/b60ca14a594e4c1baa4fcb063ff1f50b"/></a>
   </p>
 </p>
 
