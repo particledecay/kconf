@@ -180,6 +180,22 @@ func TestMerge(t *testing.T) {
 			AssertContext(t, k, "test")
 			AssertContext(t, k, "test-1") // renamed context
 		},
+		"merge multiple unique contexts": func(t *testing.T) {
+			k := MockConfig(1)
+			k2 := MockConfig(3)
+
+			// we need k and k2 to be two unique configs, so delete the first config in k2
+			err := k2.Remove("test")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			k.Merge(&k2.Config, "")
+
+			AssertContext(t, k, "test")
+			AssertContext(t, k, "test-1")
+			AssertContext(t, k, "test-2")
+		},
 		"rename cluster if it already exists": func(t *testing.T) {
 			k := MockConfig(1)
 			k2 := MockConfig(2)
