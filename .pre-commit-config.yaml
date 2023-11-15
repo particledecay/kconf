@@ -4,12 +4,6 @@ default_install_hook_types:
   - pre-commit
   - commit-msg
 repos:
-  - repo: https://github.com/talos-systems/conform
-    rev: v0.1.0-alpha.25
-    hooks:
-      - id: conform
-        stages:
-          - commit-msg
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -26,5 +20,8 @@ repos:
   - repo: https://github.com/TekWizely/pre-commit-golang
     rev: v1.0.0-rc.1
     hooks:
-      - id: go-fmt
-      - id: go-revive
+      - id: golangci-lint-mod
+  - repo: https://github.com/semgrep/semgrep
+    rev: v1.48.0
+    hooks:
+      - id: semgrep-ci

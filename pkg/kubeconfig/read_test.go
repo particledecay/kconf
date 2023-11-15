@@ -52,7 +52,10 @@ func TestRead(t *testing.T) {
 			// write some data to stdin
 			_ = GenerateAndReplaceGlobalKubeconfig(t, 1, 1)
 			confdata, _ := os.ReadFile(kc.MainConfigPath)
-			w.Write(confdata)
+			_, err := w.Write(confdata)
+			if err != nil {
+				t.Fatal(err)
+			}
 			w.Close()
 
 			// run function to read from stdin
