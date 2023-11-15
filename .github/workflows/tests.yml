@@ -1,26 +1,18 @@
 ---
 name: tests
 
-on:
-  pull_request:
-    branches: [main]
+on: pull_request_target
 
 jobs:
-  # for conform
-  conformance:
+
+  authorize:
+    environment:
+      ${{ github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      'external' || 'internal' }}
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - run: |
-          git fetch origin +refs/heads/${{ github.event.pull_request.base.ref }}:refs/heads/${{ github.event.pull_request.base.ref }}
-
-      - name: Conform
-        uses: talos-systems/conform@main
-        with:
-          args: enforce --commit-ref=refs/heads/${{ github.event.pull_request.base.ref }}
+      - run: "true"
 
   # for pre-commit
   pre-commit:
@@ -28,19 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
       - uses: actions/setup-python@v3
       - uses: actions/setup-go@v3
         with:
           go-version: 1.18
           cache: true
       - run: |
-          go install github.com/mgechev/revive@latest
+          make install-golangci-lint
       - uses: pre-commit/action@v3.0.0
 
   unit-testing:
+    needs: authorize
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - name: Set up Go
@@ -48,22 +40,15 @@ jobs:
         with:
           go-version: 1.18
           cache: true
-
       - name: Install dependencies
         run: |
           go mod vendor
       - name: Run tests
         run: |
-          go test -shuffle on -race -coverprofile coverage.out ./...
-      - name: Convert Go coverage to LCOV
-        uses: jandelgado/gcov2lcov-action@v1.0.0
+          make test
+      - name: Send test coverage to Codacy
+        uses: codacy/codacy-coverage-reporter-action@v1
         with:
-          infile: coverage.out
-          outfile: coverage.lcov
-      - name: CodeClimate
-        uses: paambaati/codeclimate-action@v2.6.0
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE }}
-        with:
-          coverageCommand: echo ""
-          coverageLocations: ./coverage.lcov:lcov
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: coverage.out
+          force-coverage-parser: go
