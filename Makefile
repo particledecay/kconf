@@ -1,10 +1,13 @@
-.PHONY: test coverage pre-commit dependencies install-golangci-lint install-pre-commit
+.PHONY: test coverage build pre-commit dependencies install-golangci-lint install-pre-commit
 
 test:
 	go test ./... -shuffle on -race -coverprofile=coverage.out
 
 coverage: test
 	go tool cover -html=coverage.out
+
+build:
+	goreleaser build --single-target --snapshot --rm-dist
 
 pre-commit: dependencies
 	@pre-commit install
