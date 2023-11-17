@@ -11,11 +11,12 @@ builds:
     ldflags:
       - -s -w -X github.com/particledecay/kconf/build.Version={{ .Version }} -X github.com/particledecay/kconf/build.Commit={{ .ShortCommit }} -X github.com/particledecay/kconf/build.Date={{ .Date }}
 archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    amd64: x86_64
-  name_template: "{{ .ProjectName }}-{{ tolower .Os }}-{{ .Arch }}-{{ .Version }}"
+- name_template: >-
+    {{- .ProjectName }}-
+    {{- tolower .Os }}-
+    {{- if eq .Arch "amd64" }}x86_64
+    {{- else }}{{ .Arch }}{{ end }}-
+    {{- .Version }}"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
