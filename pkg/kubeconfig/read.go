@@ -98,3 +98,8 @@ func (k *KConf) GetContent(name string) ([]byte, error) {
 
 	return content, nil
 }
+
+// ValidateConfig checks the provided kubeconfig file for errors
+func ValidateConfig(config *clientcmdapi.Config) error {
+	return clientcmd.Validate(*config)
+}
