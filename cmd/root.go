@@ -53,6 +53,7 @@ func Execute() {
 	root.AddCommand(VersionCmd())
 	root.AddCommand(NamespaceCmd())
 	root.AddCommand(RenameCmd())
+	root.AddCommand(VerifyCmd())
 
 	completion := CompletionCmd()
 	completion.AddCommand(completionBashCmd(root))

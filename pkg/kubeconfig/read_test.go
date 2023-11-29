@@ -250,3 +250,69 @@ func TestGetConfig(t *testing.T) {
 		PostTestCleanup()
 	}
 }
+
+func TestValidateConfig(t *testing.T) {
+	var tests = map[string]func(*testing.T){
+		"return no errors for a valid kubeconfig": func(t *testing.T) {
+			contextName := "test-1"
+			config := clientcmdapi.NewConfig()
+			config.Clusters[contextName] = &clientcmdapi.Cluster{
+				LocationOfOrigin:      "/home/user/.kube/config",
+				Server:                fmt.Sprintf("https://example-%s.com:6443", contextName),
+				InsecureSkipTLSVerify: true,
+				Extensions:            map[string]runtimeapi.Object{},
+			}
+			config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", contextName),
+			}
+			config.Contexts[contextName] = &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          contextName,
+				AuthInfo:         contextName,
+				Namespace:        "default",
+				Extensions:       map[string]runtimeapi.Object{},
+			}
+
+			err := kc.ValidateConfig(config)
+			if err != nil {
+				t.Errorf("errors found in config:\n%s", err.Error())
+			}
+
+		},
+		"return errors for an invalid kubeconfig": func(t *testing.T) {
+			contextName := "test-1"
+			config := clientcmdapi.NewConfig()
+			config.Clusters[contextName] = &clientcmdapi.Cluster{
+				LocationOfOrigin:         "/home/user/.kube/config",
+				Server:                   fmt.Sprintf("https://example-%s.com:6443", contextName),
+				InsecureSkipTLSVerify:    true,
+				CertificateAuthority:     "/etc/ssl/certs/dummy.crt",
+				CertificateAuthorityData: DummyCert.Raw,
+				Extensions:               map[string]runtimeapi.Object{},
+			}
+			config.AuthInfos[contextName] = &clientcmdapi.AuthInfo{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Token:            fmt.Sprintf("bbbbbbbbbbbb-%s", contextName),
+			}
+			config.Contexts[contextName] = &clientcmdapi.Context{
+				LocationOfOrigin: "/home/user/.kube/config",
+				Cluster:          contextName,
+				AuthInfo:         contextName,
+				Namespace:        "default",
+				Extensions:       map[string]runtimeapi.Object{},
+			}
+
+			err := kc.ValidateConfig(config)
+			if err == nil {
+				t.Error("no errors found in config")
+			}
+		},
+	}
+
+	for name, test := range tests {
+		zerolog.SetGlobalLevel(zerolog.Disabled)
+		t.Run(name, test)
+		PostTestCleanup()
+	}
+}
